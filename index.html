@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Based Lecture Summarizer & Quiz Generator | PBL 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    :root {
+      --bg-dark: #0A0A1C;
+      --bg-card: #12122a;
+      --bg-card-light: #16163a;
+      --text-white: #ffffff;
+      --text-gray: #94a3b8;
+      --accent-blue: #3b82f6;
+      --accent-purple: #8b5cf6;
+      --accent-green: #22c55e;
+      --border-blue: rgba(59, 130, 246, 0.5);
+      --border-purple: rgba(139, 92, 246, 0.5);
+      --border-green: rgba(34, 197, 94, 0.6);
+    }
+    html {
+      scroll-behavior: smooth;
+    }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-white);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.25rem 3rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .logo-section {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .logo {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.25rem;
+    }
+    .logo-text h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+    .logo-text h1 span {
+      background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .logo-text p {
+      font-size: 0.7rem;
+      color: var(--text-gray);
+      letter-spacing: 0.05em;
+      margin-top: 0.15rem;
+    }
+    nav {
+      display: flex;
+      gap: 2rem;
+    }
+    nav a {
+      color: var(--text-white);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      transition: color 0.2s;
+    }
+    nav a:hover {
+      color: var(--accent-blue);
+    }
+    /* Hero */
+    .hero {
+      padding: 4rem 3rem 5rem;
+      text-align: center;
+    }
+    .id-tag {
+      display: inline-block;
+      padding: 0.4rem 1rem;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      color: var(--text-gray);
+      margin-bottom: 1.5rem;
+    }
+    .project-title {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin-bottom: 2rem;
+      background: linear-gradient(90deg, #60a5fa, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hypothesis {
+      max-width: 700px;
+      margin: 0 auto;
+      font-size: 1rem;
+      color: var(--text-gray);
+      font-style: italic;
+      position: relative;
+      padding-left: 1.5rem;
+      border-left: 3px solid var(--accent-blue);
+    }
+    .hypothesis ul {
+      list-style: none;
+      margin-top: 0.75rem;
+    }
+    .hypothesis li {
+      padding-left: 1rem;
+      position: relative;
+      margin-bottom: 0.5rem;
+    }
+    .hypothesis li::before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: var(--accent-blue);
+    }
+    /* Content Cards - Problem, Literature, Research */
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 1.5rem;
+      padding: 0 3rem 4rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .card {
+      border-radius: 16px;
+      padding: 1.75rem;
+      background: var(--bg-card);
+    }
+    .card-problem {
+      grid-row: span 2;
+      border: 1px solid var(--border-blue);
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
+    }
+    .card-literature {
+      border: 1px solid var(--border-blue);
+    }
+    .card-research {
+      border: 1px solid var(--border-purple);
+      box-shadow: 0 0 20px rgba(139, 92, 246, 0.1);
+    }
+    .card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+    .card-literature h3,
+    .card-research h3 {
+      font-size: 0.85rem;
+      letter-spacing: 0.05em;
+    }
+    .card p {
+      font-size: 0.95rem;
+      color: var(--text-gray);
+      line-height: 1.7;
+    }
+    /* Section Titles */
+    section {
+      padding: 4rem 3rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .section-title {
+      text-align: center;
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 3rem;
+    }
+    .section-title .accent {
+      color: var(--accent-blue);
+    }
+    /* System Methodology */
+    #methodology {
+      padding-top: 2rem;
+    }
+    .methodology-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+    .methodology-card {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 2rem;
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: transform 0.2s;
+    }
+    .methodology-card:hover {
+      transform: translateY(-2px);
+    }
+    .methodology-card.highlight {
+      border: 2px solid var(--accent-green);
+      box-shadow: 0 0 30px rgba(34, 197, 94, 0.2);
+    }
+    .methodology-card .icon {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 1.25rem;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .methodology-card .icon svg {
+      width: 32px;
+      height: 32px;
+    }
+    .methodology-card .icon.blue {
+      background: rgba(59, 130, 246, 0.2);
+    }
+    .methodology-card .icon.purple {
+      background: rgba(139, 92, 246, 0.2);
+    }
+    .methodology-card .icon.green {
+      background: rgba(34, 197, 94, 0.2);
+    }
+    .methodology-card h4 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.75rem;
+    }
+    .methodology-card p {
+      font-size: 0.85rem;
+      color: var(--text-gray);
+      margin-bottom: 1.25rem;
+    }
+    .demo-btn {
+      display: inline-block;
+      padding: 0.75rem 1.5rem;
+      background: var(--accent-green);
+      color: white;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.85rem;
+      letter-spacing: 0.05em;
+      border-radius: 12px;
+      transition: background 0.2s, transform 0.2s;
+    }
+    .demo-btn:hover {
+      background: #16a34a;
+      transform: scale(1.02);
+    }
+    .demo-hint {
+      font-size: 0.75rem;
+      color: var(--text-gray);
+      margin-bottom: 1rem;
+    }
+    .demo-hint code {
+      background: rgba(255,255,255,0.1);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+    }
+    /* Results & Analysis */
+    #results {
+      padding-top: 2rem;
+    }
+    .results-container {
+      background: var(--bg-card);
+      border-radius: 24px;
+      padding: 2.5rem;
+      border: 1px solid var(--border-blue);
+      box-shadow: 0 0 40px rgba(59, 130, 246, 0.15);
+    }
+    .results-content {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 3rem;
+      align-items: center;
+    }
+    .chart-area {
+      display: flex;
+      align-items: flex-end;
+      gap: 3rem;
+      padding: 1rem 0;
+    }
+    .chart-bars {
+      display: flex;
+      gap: 4rem;
+      align-items: flex-end;
+      flex: 1;
+      justify-content: center;
+    }
+    .bar-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .bar {
+      width: 80px;
+      border-radius: 8px 8px 0 0;
+      transition: height 0.5s ease;
+    }
+    .bar-existing {
+      height: 70px;
+      background: #334155;
+    }
+    .bar-ours {
+      height: 92px;
+      background: linear-gradient(180deg, var(--accent-blue), #2563eb);
+    }
+    .bar-group span {
+      font-size: 0.85rem;
+      color: var(--text-gray);
+    }
+    .y-axis {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 120px;
+      font-size: 0.75rem;
+      color: var(--text-gray);
+    }
+    .accuracy-panel {
+      background: var(--bg-card-light);
+      border-radius: 16px;
+      padding: 1.5rem;
+      border: 1px solid var(--border-blue);
+    }
+    .accuracy-panel h4 {
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--text-gray);
+      margin-bottom: 0.5rem;
+    }
+    .accuracy-value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--accent-blue);
+      margin-bottom: 0.5rem;
+    }
+    .accuracy-panel p {
+      font-size: 0.85rem;
+      color: var(--text-gray);
+    }
+    /* Academic Credits */
+    #team {
+      padding-top: 2rem;
+    }
+    .credits-title {
+      text-align: center;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-gray);
+      letter-spacing: 0.1em;
+      margin-bottom: 3rem;
+    }
+    .credits-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+    .credit-card {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 2rem;
+      text-align: center;
+    }
+    .credit-card.guide {
+      border: 2px solid var(--border-blue);
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+    }
+    .credit-card.team {
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    .credit-card .label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.75rem;
+    }
+    .credit-card.guide .label {
+      color: var(--accent-blue);
+    }
+    .credit-card.team .label {
+      color: var(--text-gray);
+    }
+    .credit-card .name {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+    .credit-card .regno {
+      font-size: 0.9rem;
+      color: var(--text-gray);
+    }
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 3rem 2rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    footer p {
+      font-size: 0.9rem;
+      color: var(--text-gray);
+      letter-spacing: 0.05em;
+    }
+    footer p + p {
+      margin-top: 0.25rem;
+      font-size: 0.8rem;
+    }
+    /* Responsive */
+    @media (max-width: 900px) {
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+      .card-problem {
+        grid-row: span 1;
+      }
+      .methodology-grid {
+        grid-template-columns: 1fr;
+      }
+      .results-content {
+        grid-template-columns: 1fr;
+      }
+      .credits-grid {
+        grid-template-columns: 1fr;
+      }
+      header {
+        flex-direction: column;
+        gap: 1rem;
+      }
+      nav {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+    }
+    @media (max-width: 600px) {
+      .hero, .content-grid, section {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+      }
+      header {
+        padding: 1rem 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo-section">
+      <div class="logo">M</div>
+      <div class="logo-text">
+        <h1>PBL <span>2026</span></h1>
+        <p>DEPT. OF COMPUTER SCIENCE & ENGINEERING</p>
+      </div>
+    </div>
+    <nav>
+      <a href="#problem">PROBLEM</a>
+      <a href="#methodology">METHODOLOGY</a>
+      <a href="#results">RESULTS</a>
+      <a href="#team">TEAM</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <span class="id-tag">ID: 2427030062 & 2427030033</span>
+      <h2 class="project-title">AI Based Lecture Summarizer & Quiz Generator</h2>
+      <blockquote class="hypothesis">
+        Lectures are often recorded or delivered online, enabling students to access them anytime. However, despite this accessibility, students face difficulties in retaining large volumes of lecture material, especially when lectures are long, dense, or delivered at a fast pace. Thus, there is a pressing need for an AI‑based system capable of:
+        <ul>
+          <li>Automatically transcribing lecture audio/video,</li>
+          <li>Generating high‑quality summaries, and</li>
+          <li>Creating quiz questions that support revision and learning.</li>
+        </ul>
+      </blockquote>
+    </section>
+
+    <div class="content-grid" id="problem">
+      <div class="card card-problem">
+        <h3>Problem Statement</h3>
+        <p>Students face difficulty in retaining long and dense lecture content due to the lack of automated tools that convert classroom lectures into concise summaries and quizzes. The project aims to develop an AI‑based system that can automatically transcribe, summarize, and generate quizzes from lecture audio/video using advanced NLP and ASR models.</p>
+      </div>
+      <div class="card card-literature">
+        <h3>LITERATURE REVIEW / MARKET RESEARCH</h3>
+        <p>Research shows that AI lecture summarizers and quiz generators leverage NLP and LLMs to extract key concepts and create automated assessments, improving learning efficiency and engagement. Challenges include maintaining accuracy, contextual understanding, and ensuring reliable outputs.</p>
+      </div>
+      <div class="card card-research">
+        <h3>RESEARCH GAP / INNOVATION</h3>
+        <p>The system integrates lecture transcription, AI summarization, and automated quiz generation with an intuitive interface to enhance learning effectiveness and engagement.</p>
+      </div>
+    </div>
+
+    <section id="methodology">
+      <h2 class="section-title">SYSTEM <span class="accent">METHODOLOGY</span></h2>
+      <div class="methodology-grid">
+        <div class="methodology-card">
+          <div class="icon blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
+          </div>
+          <h4>DATASET / INPUT</h4>
+          <p>Lecture audio, video, PDF, and text files. Supports MP3, WAV, MP4, WebM, and document formats.</p>
+        </div>
+        <div class="methodology-card">
+          <div class="icon purple">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>
+          </div>
+          <h4>MODEL / ARCHITECTURE</h4>
+          <p>Speech-to-text (Whisper/ASR), LLM summarization, and quiz generation pipeline with REST API.</p>
+        </div>
+        <div class="methodology-card highlight">
+          <div class="icon green">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14.25.18l.9.2.73.26.59.3.45.32.34.34.25.34.16.33.1.3.04.26.02.2-.01.13V8.5l-.05.63-.13.55-.21.46-.26.38-.3.31-.33.25-.35.19-.35.14-.33.1-.3.07-.26.04-.21.02H8.83l-.69.05-.59.14-.5.22-.41.27-.33.32-.27.35-.2.36-.15.36-.1.34-.07.3-.04.24-.02.17v3.06H3.23l-.22-.03-.28-.07-.27-.11-.24-.16-.2-.2-.15-.25-.1-.29-.05-.33V12.5l.04-.24.09-.18.13-.14.16-.1.18-.07.2-.04.2-.01h5.39V9.45H5.35l-.01-2.88-.02-.37.05-.34.1-.31.15-.28.2-.25.26-.22.31-.18.36-.15.42-.11.47-.08.52-.04.56-.01.41.02.36.05.31.08.27.1.24.13.2.14.18.16.14.17.12.17.09.16.07.14.05.12.02.09V5.7h5.41v2.28h2.23l.01 2.87.02.37-.05.34-.1.31-.15.28-.2.25-.26.22-.31.18-.36.15-.42.11-.47.08-.52.04-.56.01-.19-.01-.18-.02-.17-.03zm-8.1 16.22h2.28v2.27h2.28v2.28h2.27v2.27h-2.27v2.28H8.43v-2.28H6.15v-2.27h2.28v-2.28h2.28v-2.27zm13.06-7.76l.9.2.73.26.59.3.45.32.34.34.25.34.16.33.1.3.04.26.02.2-.01.13v6.65l-.05.63-.13.55-.21.46-.26.38-.3.31-.33.25-.35.19-.35.14-.33.1-.3.07-.26.04-.21.02h-5.39l-.01 2.22h2.23l.01 2.88.02.37-.05.34-.1.31-.15.28-.2.25-.26.22-.31.18-.36.15-.42.11-.47.08-.52.04-.56.01-.19-.01-.18-.02-.17-.03-.15-.05-.13-.06-.12-.08-.1-.09-.09-.1-.06-.12-.05-.13-.03-.14-.01-.15.01h-5.41v-2.22h-2.23l-.01-2.88-.02-.37.05-.34.1-.31.15-.28.2-.25.26-.22.31-.18.36-.15.42-.11.47-.08.52-.04.56-.01.41.02.36.05.31.08.27.1.24.13.2.14.18.16.14.17.12.17.09.16.07.14.05.12.02.09v-6.64l.05-.63.13-.55.21-.46.26-.38.3-.31.33-.25.35-.19.35-.14.33-.1.3-.07.26-.04.21-.02h5.39V9.23h-2.28V6.94h-2.27V4.67h2.27V2.39h2.28V4.67h2.28v2.27h-2.28v2.27h-2.28v2.22zm-2.27 4.54h-2.28v-2.28h2.28v2.28z"/></svg>
+          </div>
+          <h4>LIVE EXECUTION</h4>
+          <p>Interactive web application with upload, transcript, summary tabs, and quiz generation.</p>
+          <p class="demo-hint">Run <code>npm run dev</code> in the lecture-mind folder first.</p>
+          <a href="http://127.0.0.1:3000" class="demo-btn" target="_blank" rel="noopener">VIEW CODE / DEMO</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="results">
+      <h2 class="section-title">RESULTS & <span class="accent">ANALYSIS</span></h2>
+      <div class="results-container">
+        <div class="results-content">
+          <div class="chart-area">
+            <div class="y-axis">
+              <span>100</span>
+              <span>50</span>
+              <span>0</span>
+            </div>
+            <div class="chart-bars">
+              <div class="bar-group">
+                <div class="bar bar-existing"></div>
+                <span>Existing System</span>
+              </div>
+              <div class="bar-group">
+                <div class="bar bar-ours"></div>
+                <span>Our Solution</span>
+              </div>
+            </div>
+          </div>
+          <div class="accuracy-panel">
+            <h4>ACCURACY / PERFORMANCE</h4>
+            <div class="accuracy-value">91.2%</div>
+            <p>Quantifiable outcomes and evaluation metrics compared to baselines.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="team">
+      <h2 class="credits-title">ACADEMIC CREDITS</h2>
+      <div class="credits-grid">
+        <div class="credit-card guide">
+          <p class="label">PROJECT GUIDE</p>
+          <p class="name">Dr. Shweta Gangrade</p>
+        </div>
+        <div class="credit-card team">
+          <p class="label">TEAM MEMBER 1</p>
+          <p class="name">Lakshya Katiyar</p>
+          <p class="regno">2427030062</p>
+        </div>
+        <div class="credit-card team">
+          <p class="label">TEAM MEMBER 2</p>
+          <p class="name">Prithvi Raj Singh</p>
+          <p class="regno">2427030033</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>MANIPAL UNIVERSITY JAIPUR</p>
+    <p>DEPARTMENT OF COMPUTER SCIENCE & ENGINEERING • 2026</p>
+  </footer>
+</body>
+</html>
