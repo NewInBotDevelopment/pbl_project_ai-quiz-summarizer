@@ -61,6 +61,7 @@
       padding: 0.75rem 1.5rem;
       border-radius: 12px;
       margin-top: 0.5rem;
+      margin-right: 0.5rem;
       transition: background 0.2s;
     }
     .btn:hover { background: #16a34a; }
@@ -68,28 +69,59 @@
       background: transparent;
       border: 1px solid rgba(255,255,255,0.2);
       font-size: 0.9rem;
-      margin-left: 0.5rem;
     }
     .btn-small:hover { background: rgba(255,255,255,0.05); }
+    .local-only { display: none; }
+    .hosted-only { display: none; }
   </style>
 </head>
 <body>
   <div class="card">
     <h1>Lecture Mind demo</h1>
     <p class="sub">Start the app, then open the demo.</p>
-    <p>The demo runs as a separate app on your computer. If you see &quot;This site can&apos;t be reached&quot;, the app isn&apos;t running yet. Follow these steps:</p>
-    <ol>
-      <li>Open a terminal or Command Prompt.</li>
-      <li>Go to the project folder and into <code>lecture-mind</code>:<br>
-        <code>cd lecture-mind</code></li>
-      <li>Install dependencies (first time only):<br>
-        <code>npm install</code></li>
-      <li>Start the app:<br>
-        <code>npm run dev</code></li>
-      <li>When you see &quot;Ready&quot; in the terminal, click the button below.</li>
-    </ol>
-    <a href="http://localhost:3000" class="btn" target="_blank" rel="noopener">Open Lecture Mind →</a>
-    <a href="index.html" class="btn btn-small">Back to PBL project</a>
+
+    <!-- When opened on localhost: show local instructions + Open button -->
+    <div class="local-only" id="localBlock">
+      <p>The demo runs as a separate app on your computer. If you see &quot;This site can&apos;t be reached&quot;, the app isn&apos;t running yet. Follow these steps:</p>
+      <ol>
+        <li>Open a terminal or Command Prompt.</li>
+        <li>Go to the project folder and into <code>lecture-mind</code>:<br>
+          <code>cd lecture-mind</code></li>
+        <li>Install dependencies (first time only):<br>
+          <code>npm install</code></li>
+        <li>Start the app:<br>
+          <code>npm run dev</code></li>
+        <li>When you see &quot;Ready&quot; in the terminal, click the button below.</li>
+      </ol>
+      <a href="http://localhost:3000" class="btn" target="_blank" rel="noopener">Open Lecture Mind →</a>
+    </div>
+
+    <!-- When opened on hosted site (e.g. GitHub Pages): show this -->
+    <div class="hosted-only" id="hostedBlock">
+      <p>You&apos;re viewing this page on the live site. The interactive Lecture Mind demo runs locally or on a separate host.</p>
+      <p><strong>To run the demo yourself:</strong></p>
+      <ol>
+        <li>Clone or download this repository.</li>
+        <li>Open a terminal in the project folder, then run:<br>
+          <code>cd lecture-mind</code><br>
+          <code>npm install</code><br>
+          <code>npm run dev</code></li>
+        <li>Open <a href="http://localhost:3000" target="_blank" rel="noopener" class="btn btn-small" style="margin-left:0">http://localhost:3000</a> in your browser.</li>
+      </ol>
+    </div>
+
+    <a href="./index.html" class="btn btn-small">← Back to PBL project</a>
   </div>
+
+  <script>
+    (function() {
+      var isLocal = /^localhost$|^127\.0\.0\.1$|^\[::1\]$/i.test(window.location.hostname) || window.location.protocol === 'file:';
+      if (isLocal) {
+        document.getElementById('localBlock').style.display = 'block';
+      } else {
+        document.getElementById('hostedBlock').style.display = 'block';
+      }
+    })();
+  </script>
 </body>
 </html>
