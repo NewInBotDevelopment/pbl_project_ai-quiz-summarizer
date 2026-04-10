@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Lecture Summarizer & Quiz Generator — PBL 2026 | MUJ CSE</title>
+  <meta name="description" content="A PBL project by Lakshya Katiyar & Prithvi Raj Singh — AI-based system for automatic lecture transcription, summarization, and quiz generation using NLP and ASR models." />
+  <meta name="keywords" content="AI Lecture Summarizer, Quiz Generator, NLP, ASR, Machine Learning, PBL, MUJ, CSE" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <!-- ===== STAR BACKGROUND ===== -->
+  <div class="stars-container" id="starsContainer"></div>
+
+  <!-- ===== NAVBAR ===== -->
+  <nav class="navbar" id="navbar">
+    <div class="container">
+      <a href="#home" class="nav-brand">
+        <div class="nav-logo">AI</div>
+        <div class="nav-brand-text">
+          <div class="brand-title">PBL 2026</div>
+          <div class="brand-subtitle">Dept. of Computer Science & Engineering</div>
+        </div>
+      </a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#problem">Problem</a></li>
+        <li><a href="#methodology">Methodology</a></li>
+        <li><a href="#results">Results</a></li>
+        <li><a href="#team">Team</a></li>
+      </ul>
+      <div class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===== HERO SECTION ===== -->
+  <section id="home" class="hero">
+    <div class="hero-content">
+      <div class="hero-badge">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+          <circle cx="12" cy="12" r="10"/>
+        </svg>
+        ID: 2427030062 &amp; 2427030033
+      </div>
+
+      <h1 class="hero-title">AI Based Lecture Summarizer<br>&amp; Quiz Generator</h1>
+
+      <div class="hero-subtitle-wrapper">
+        <div class="hero-line"></div>
+        <p class="hero-subtitle">
+          Lectures are often recorded or delivered online, enabling students to access them anytime.
+          However, despite this accessibility, students face difficulties in retaining large volumes
+          of lecture material, especially when lectures are <strong>long, dense, or delivered at a fast pace</strong>.
+          Thus, there is a pressing need for an AI&#8209;based system capable of:<br><br>
+          • Automatically transcribing lecture audio/video,<br>
+          • Generating high&#8209;quality summaries, and<br>
+          • Creating quiz questions that support revision and learning.
+        </p>
+      </div>
+    </div>
+
+    <div class="scroll-indicator">
+      <span>Scroll</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 5v14M5 12l7 7 7-7"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- ===== PROBLEM & RESEARCH SECTION ===== -->
+  <section id="problem">
+    <div class="container">
+      <div class="fade-in">
+        <span class="section-tag">01 — Foundation</span>
+        <h2 class="section-title">
+          Problem &amp; <span class="gradient-text">Research</span>
+        </h2>
+      </div>
+
+      <div class="problem-grid">
+        <!-- Main Problem Card -->
+        <div class="glass-card problem-main-card fade-in fade-in-delay-1">
+          <div class="card-icon">🎯</div>
+          <div class="card-label">Core Challenge</div>
+          <h3 class="card-title">Problem Statement</h3>
+          <p class="card-text">
+            Students face difficulty in retaining long and dense lecture content due to the lack of
+            automated tools that convert classroom lectures into concise summaries and quizzes. The
+            project aims to develop an AI&#8209;based system that can automatically transcribe,
+            summarize, and generate quizzes from lecture audio/video using advanced NLP and ASR models.
+          </p>
+        </div>
+
+        <!-- Right Stacked Cards -->
+        <div class="problem-stack">
+          <!-- Literature Review -->
+          <div class="glass-card problem-sub-card blue-border fade-in fade-in-delay-2">
+            <span class="sub-badge blue">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              Literature Review
+            </span>
+            <div class="card-label">Market Research</div>
+            <p class="card-text">
+              Research shows that AI lecture summarizers and quiz generators leverage NLP and LLMs to
+              extract key concepts and create automated assessments, improving learning efficiency and
+              engagement. Challenges include maintaining accuracy, contextual understanding, and
+              ensuring reliable outputs.
+            </p>
+          </div>
+
+          <!-- Research Gap -->
+          <div class="glass-card problem-sub-card purple-border fade-in fade-in-delay-3">
+            <span class="sub-badge purple">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              Innovation
+            </span>
+            <div class="card-label">Research Gap</div>
+            <p class="card-text">
+              The system integrates lecture transcription, AI summarization, and automated quiz
+              generation with an intuitive interface to enhance learning effectiveness and engagement.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== METHODOLOGY SECTION ===== -->
+  <section id="methodology">
+    <div class="container">
+      <div class="methodology-header fade-in">
+        <span class="section-tag">02 — Architecture</span>
+        <h2 class="methodology-title">
+          <span class="white-text">SYSTEM </span>
+          <span class="blue-text">METHODOLOGY</span>
+        </h2>
+        <p class="section-desc" style="margin:0 auto; text-align:center;">
+          A three-stage pipeline from raw lecture input to AI-generated summaries and quizzes.
+        </p>
+      </div>
+
+      <div class="methodology-cards">
+        <!-- Card 1: Dataset -->
+        <div class="glass-card method-card fade-in fade-in-delay-1">
+          <div class="method-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="1.5">
+              <ellipse cx="12" cy="5" rx="9" ry="3"/>
+              <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+              <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+            </svg>
+          </div>
+          <div class="method-step">Stage 01</div>
+          <h3 class="method-title">Dataset / Input</h3>
+          <p class="method-desc">
+            Lecture audio, video, PDF, and text files. Supports MP3, WAV, MP4, WebM, and document formats.
+          </p>
+        </div>
+
+        <!-- Card 2: Model -->
+        <div class="glass-card method-card fade-in fade-in-delay-2">
+          <div class="method-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="1.5">
+              <rect x="2" y="9" width="20" height="12" rx="2"/>
+              <path d="M8 9V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v4"/>
+              <path d="M12 13v4M10 15h4"/>
+            </svg>
+          </div>
+          <div class="method-step">Stage 02</div>
+          <h3 class="method-title">Model / Architecture</h3>
+          <p class="method-desc">
+            Speech-to-text (Whisper/ASR), LLM summarization, and quiz generation pipeline with REST API.
+          </p>
+        </div>
+
+        <!-- Card 3: Live Demo (Green) -->
+        <div class="glass-card method-card green-theme fade-in fade-in-delay-3">
+          <div class="method-icon green-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="1.5">
+              <path d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+              <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <div class="method-step">Stage 03</div>
+          <h3 class="method-title">Live Execution</h3>
+          <p class="method-desc">
+            Interactive demo with real-time transcription, summarization, and MCQ/short-answer quiz generation.
+          </p>
+          <a href="./demo/frontend/index.html" class="demo-btn" id="viewDemoBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M15 3h6v6M10 14L21 3M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
+            </svg>
+            <span>VIEW CODE / DEMO</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== RESULTS SECTION ===== -->
+  <section id="results">
+    <div class="container">
+      <div class="fade-in">
+        <span class="section-tag">03 — Performance</span>
+        <h2 class="section-title">
+          Results &amp; <span class="gradient-text">Analysis</span>
+        </h2>
+      </div>
+
+      <div class="results-container fade-in">
+        <div class="results-grid">
+          <!-- Chart -->
+          <div class="chart-wrapper">
+            <p class="chart-title">📊 Performance Comparison — Existing vs Our Solution</p>
+            <div class="chart-canvas-wrap">
+              <canvas id="resultsChart" height="220"></canvas>
+            </div>
+            <div class="metrics-row" style="margin-top:1.5rem;">
+              <div class="metric-item">
+                <div class="metric-value">~85%</div>
+                <div class="metric-label">Summary ROUGE-L</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">92%</div>
+                <div class="metric-label">User Satisfaction</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">5s</div>
+                <div class="metric-label">Avg. Response</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Accuracy Card -->
+          <div class="accuracy-card">
+            <p class="accuracy-label">Accuracy / Performance</p>
+            <div class="accuracy-ring" id="accuracyRing">
+              <svg width="140" height="140" viewBox="0 0 140 140">
+                <defs>
+                  <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#3B82F6"/>
+                    <stop offset="100%" stop-color="#A78BFA"/>
+                  </linearGradient>
+                </defs>
+                <circle class="ring-bg" cx="70" cy="70" r="54"/>
+                <circle class="ring-fill" cx="70" cy="70" r="54" id="ringFill"/>
+              </svg>
+              <div class="accuracy-value" id="accuracyValue">0%</div>
+            </div>
+            <p class="accuracy-desc">
+              Our AI pipeline achieves <strong style="color:#60A5FA;">80% overall accuracy</strong>
+              across transcription, summarization, and quiz generation tasks — outperforming
+              baseline approaches by 22 percentage points.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== TEAM SECTION ===== -->
+  <section id="team">
+    <div class="container">
+      <div class="fade-in">
+        <span class="section-tag">04 — Credits</span>
+        <h2 class="section-title">
+          Academic <span class="gradient-text">Credits</span>
+        </h2>
+      </div>
+
+      <div class="team-cards">
+        <!-- Guide -->
+        <div class="glass-card team-card fade-in fade-in-delay-1">
+          <div class="team-avatar guide">MG</div>
+          <div class="team-role">Project Guide</div>
+          <div class="team-name">Dr. Manish Gupta</div>
+          <div class="team-id">Faculty Mentor</div>
+        </div>
+
+        <!-- Member 1 -->
+        <div class="glass-card team-card fade-in fade-in-delay-2">
+          <div class="team-avatar member-1">LK</div>
+          <div class="team-role">Team Member</div>
+          <div class="team-name">Lakshya Katiyar</div>
+          <div class="team-id">2427030062</div>
+        </div>
+
+        <!-- Member 2 -->
+        <div class="glass-card team-card fade-in fade-in-delay-3">
+          <div class="team-avatar member-2">PR</div>
+          <div class="team-role">Team Member</div>
+          <div class="team-name">Prithvi Raj Singh</div>
+          <div class="team-id">2427030033</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer>
+    <div class="container">
+      <div class="footer-logo">
+        <div class="nav-logo" style="width:32px;height:32px;font-size:0.85rem;">AI</div>
+        <span class="footer-title">PBL Project 2026</span>
+      </div>
+      <p class="footer-subtitle">Manipal University Jaipur</p>
+      <p class="footer-year">Department of Computer Science &amp; Engineering &bull; 2026</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
