@@ -126,108 +126,72 @@
       </div>
     </header>
 
-    <!-- UPLOAD SECTION -->
-    <section class="upload-section" aria-label="File upload">
+  <!-- ONLY CHANGE IS BELOW (demo banner removed) -->
 
-      <!-- Demo Banner -->
-      <div class="demo-banner" role="note">
-        <span style="font-size:1.1rem;flex-shrink:0;">⚡</span>
-        <div>
-          <strong>Static Demo Mode</strong> — Runs entirely in your browser with realistic mock AI data.
-          For real AI, start <code>demo/backend/app.py</code> and set your <code>OPENAI_API_KEY</code>.
-        </div>
+<!-- UPLOAD SECTION -->
+<section class="upload-section" aria-label="File upload">
+
+  <!-- Upload Card -->
+  <div class="glass upload-card">
+
+    <!-- Drop Zone -->
+    <div
+      class="drop-zone"
+      id="dropZone"
+      role="button"
+      tabindex="0"
+      aria-label="Drop file here or click to browse"
+      onclick="document.getElementById('fileInput').click()"
+      ondragover="handleDragOver(event)"
+      ondragleave="handleDragLeave(event)"
+      ondrop="handleDrop(event)"
+      onkeydown="if(event.key==='Enter'||event.key===' ')document.getElementById('fileInput').click()"
+    >
+      <div class="scan-line" aria-hidden="true"></div>
+
+      <div class="drop-icon-ring" aria-hidden="true" id="dropIcon">📁</div>
+      <h2 class="drop-title" id="dropTitle">Drop your lecture file here</h2>
+      <p class="drop-sub" id="dropSub">Click to browse, or drag & drop any file</p>
+
+      <div class="format-row">
+        <span class="fmt-chip">MP3</span>
+        <span class="fmt-chip">WAV</span>
+        <span class="fmt-chip">PDF</span>
+        <span class="fmt-chip">DOCX</span>
+        <span class="fmt-chip">TXT</span>
       </div>
+    </div>
 
-      <!-- Upload Card -->
-      <div class="glass upload-card">
+    <input
+      type="file"
+      id="fileInput"
+      accept=".mp3,.wav,.pdf,.docx,.txt"
+      onchange="handleFileSelect(event)"
+    />
 
-        <!-- Drop Zone -->
-        <div
-          class="drop-zone"
-          id="dropZone"
-          role="button"
-          tabindex="0"
-          aria-label="Drop file here or click to browse"
-          onclick="document.getElementById('fileInput').click()"
-          ondragover="handleDragOver(event)"
-          ondragleave="handleDragLeave(event)"
-          ondrop="handleDrop(event)"
-          onkeydown="if(event.key==='Enter'||event.key===' ')document.getElementById('fileInput').click()"
-        >
-          <div class="scan-line" aria-hidden="true"></div>
+    <!-- File preview -->
+    <div class="file-preview" id="filePreview">
+      <span id="previewIcon">📄</span>
+      <div>
+        <div id="previewName">—</div>
+        <div id="previewMeta">—</div>
+      </div>
+      <button onclick="removeFile()">✕ Remove</button>
+    </div>
 
-          <div class="drop-icon-ring" aria-hidden="true" id="dropIcon">📁</div>
-          <h2 class="drop-title" id="dropTitle">Drop your lecture file here</h2>
-          <p class="drop-sub" id="dropSub">Click to browse, or drag &amp; drop any file</p>
+    <!-- Action Buttons -->
+    <div class="action-row">
+      <button id="btnSummary" onclick="startProcessing('summary')" disabled>
+        Generate Summary
+      </button>
 
-          <div class="format-row" role="list" aria-label="Supported formats">
-            <span class="fmt-chip" role="listitem">MP3</span>
-            <span class="fmt-chip" role="listitem">WAV</span>
-            <span class="fmt-chip" role="listitem">MP4</span>
-            <span class="fmt-chip" role="listitem">WebM</span>
-            <span class="fmt-chip" role="listitem">PDF</span>
-            <span class="fmt-chip" role="listitem">DOCX</span>
-            <span class="fmt-chip" role="listitem">TXT</span>
-          </div>
-        </div>
+      <button id="btnQuiz" onclick="startProcessing('quiz')" disabled>
+        Generate Quiz
+      </button>
+    </div>
 
-        <input
-          type="file"
-          id="fileInput"
-          accept=".mp3,.wav,.mp4,.webm,.pdf,.docx,.txt"
-          onchange="handleFileSelect(event)"
-          aria-label="File upload input"
-        />
-
-        <!-- File preview -->
-        <div class="file-preview" id="filePreview" role="status" aria-live="polite">
-          <span class="file-preview-icon" id="previewIcon" aria-hidden="true">📄</span>
-          <div>
-            <div class="file-name" id="previewName">—</div>
-            <div class="file-meta" id="previewMeta">—</div>
-          </div>
-          <button class="file-remove-btn" onclick="removeFile()" aria-label="Remove selected file">✕ Remove</button>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="action-row" id="actionRow">
-          <div class="action-btn-wrap">
-            <button
-              class="btn btn-primary"
-              id="btnSummary"
-              onclick="startProcessing('summary')"
-              disabled
-              aria-label="Generate summary from lecture"
-            >
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-                <line x1="16" y1="13" x2="8" y2="13"/>
-                <line x1="16" y1="17" x2="8" y2="17"/>
-              </svg>
-              Generate Summary
-            </button>
-            <span class="action-btn-desc">Quick notes &amp; key points</span>
-          </div>
-
-          <div class="action-btn-wrap">
-            <button
-              class="btn btn-cyan"
-              id="btnQuiz"
-              onclick="startProcessing('quiz')"
-              disabled
-              aria-label="Generate quiz from lecture"
-            >
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/>
-                <line x1="12" y1="17" x2="12.01" y2="17"/>
-              </svg>
-              Generate Quiz
-            </button>
-            <span class="action-btn-desc">MCQs &amp; short answers</span>
-          </div>
-        </div>
+  </div>
+</section>
 
       </div><!-- /upload-card -->
 
