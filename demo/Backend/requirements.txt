@@ -13,9 +13,6 @@ flask-cors==4.0.1
 # ── OpenAI SDK (GPT + Whisper API) ──
 openai>=1.30.0
 
-# ── Local Whisper ASR (runs on CPU) ──
-openai-whisper==20231117
-
 # ── PDF text extraction ──
 PyPDF2==3.0.1
 
@@ -35,8 +32,3 @@ gunicorn==22.0.0
 
 # ── NumPy (Whisper dependency) ──
 numpy>=1.24.0,<2.0.0
-
-# ── Torch (required by Whisper local model) ──
-# NOTE: Install CPU version to save disk space:
-# pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
-torch>=2.0.0
