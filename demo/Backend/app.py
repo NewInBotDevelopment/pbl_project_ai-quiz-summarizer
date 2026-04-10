@@ -2,24 +2,25 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 import tempfile
-import time
-import json
-from datetime import datetime
 from openai import OpenAI
 
 app = Flask(__name__)
 CORS(app)
 
+# Initialize OpenAI client safely
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 ALLOWED_EXTENSIONS = {'mp3', 'wav', 'pdf', 'docx', 'txt'}
 
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 def extract_text_from_txt(path):
     with open(path, 'r', encoding='utf-8', errors='ignore') as f:
         return f.read()
+
 
 def extract_text_from_pdf(path):
     import PyPDF2
@@ -30,10 +31,12 @@ def extract_text_from_pdf(path):
             text += page.extract_text() or ""
     return text
 
+
 def extract_text_from_docx(path):
     from docx import Document
     doc = Document(path)
     return "\n".join([p.text for p in doc.paragraphs])
+
 
 def transcribe_audio(path):
     with open(path, "rb") as f:
@@ -43,12 +46,14 @@ def transcribe_audio(path):
         )
     return transcript.text
 
+
 def generate_summary(text):
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[{"role": "user", "content": f"Summarize this:\n{text[:4000]}"}]
     )
     return response.choices[0].message.content
+
 
 def generate_quiz(text):
     response = client.chat.completions.create(
@@ -57,9 +62,11 @@ def generate_quiz(text):
     )
     return response.choices[0].message.content
 
+
 @app.route('/api/health')
 def health():
     return jsonify({"status": "ok"})
+
 
 @app.route('/api/process', methods=['POST'])
 def process():
@@ -78,6 +85,7 @@ def process():
         path = tmp.name
 
     try:
+        # 🔹 Extract text
         if ext in ['mp3', 'wav']:
             text = transcribe_audio(path)
         elif ext == 'pdf':
@@ -87,6 +95,10 @@ def process():
         else:
             text = extract_text_from_txt(path)
 
+        if not text or len(text.strip()) < 10:
+            return jsonify({"error": "Could not extract text"}), 400
+
+        # 🔹 AI processing
         summary = generate_summary(text)
         quiz = generate_quiz(text)
 
@@ -95,12 +107,14 @@ def process():
             "quiz": quiz
         })
 
-   except Exception as e:
-    print("ERROR:", str(e))
-    return jsonify({"error": str(e)}), 500
+    except Exception as e:
+        print("ERROR:", str(e))
+        return jsonify({"error": str(e)}), 500
 
     finally:
-        os.remove(path)
+        if os.path.exists(path):
+            os.remove(path)
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
