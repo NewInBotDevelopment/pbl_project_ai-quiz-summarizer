@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LecturAI — Turn Lectures into Smart Notes & Quizzes</title>
+  <meta name="description" content="AI-powered lecture summarizer and quiz generator. Upload audio, video, PDF or text and get instant summaries, key points and practice quizzes." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ═══ BACKGROUND ═══ -->
+  <div class="bg-gradient-mesh" aria-hidden="true">
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+    <div class="bg-grid"></div>
+  </div>
+
+  <!-- ═══ LOADING OVERLAY ═══ -->
+  <div class="loading-overlay" id="loadingOverlay" role="status" aria-live="polite">
+    <div class="loading-spinner-wrap" aria-hidden="true">
+      <div class="spinner-ring spinner-ring-1"></div>
+      <div class="spinner-ring spinner-ring-2"></div>
+      <div class="spinner-ring spinner-ring-3"></div>
+      <div class="spinner-core">🤖</div>
+    </div>
+
+    <div>
+      <p class="loading-title">Analyzing your lecture using AI…</p>
+      <p class="loading-subtitle" id="loadingSubtitle">Preparing pipeline</p>
+    </div>
+
+    <div class="loading-steps" id="loadingSteps">
+      <div class="loading-step" id="lstep-1">
+        <div class="step-icon">📂</div>
+        <span>Validating &amp; loading file</span>
+      </div>
+      <div class="loading-step" id="lstep-2">
+        <div class="step-icon">🎙️</div>
+        <span>Transcribing audio / extracting text</span>
+      </div>
+      <div class="loading-step" id="lstep-3">
+        <div class="step-icon">🧠</div>
+        <span>Generating AI summary</span>
+      </div>
+      <div class="loading-step" id="lstep-4">
+        <div class="step-icon">❓</div>
+        <span>Building quiz questions</span>
+      </div>
+    </div>
+
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="loadingBar"></div>
+    </div>
+  </div>
+
+  <!-- ═══ NAVBAR ═══ -->
+  <nav class="navbar" id="navbar" role="navigation" aria-label="Main navigation">
+    <div class="nav-inner">
+      <!-- Brand -->
+      <a href="index.html" class="nav-brand" aria-label="LecturAI Home">
+        <div class="nav-brand-logo" aria-hidden="true">🤖</div>
+        <div>
+          <div class="nav-brand-name">LecturAI</div>
+          <div class="nav-brand-sub">Powered by GPT + Whisper</div>
+        </div>
+      </a>
+
+      <!-- Links -->
+      <div class="nav-links" role="list">
+        <a href="index.html" class="nav-link active" role="listitem" id="nav-home">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+          Home
+        </a>
+        <a href="results.html" class="nav-link" role="listitem">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+          </svg>
+          Results
+        </a>
+        <a href="../../index.html" class="nav-link" role="listitem">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M19 12H5M12 5l-7 7 7 7"/>
+          </svg>
+          Portfolio
+        </a>
+      </div>
+
+      <!-- Actions -->
+      <div class="nav-actions">
+        <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Toggle light/dark mode" title="Toggle theme"></button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══ PAGE ═══ -->
+  <main class="page">
+
+    <!-- HERO -->
+    <header class="hero">
+      <div class="hero-eyebrow">
+        <div class="hero-dot"></div>
+        <span class="hero-eyebrow-text">AI-Powered Learning Tool · PBL 2026</span>
+      </div>
+
+      <h1 class="hero-title">
+        Turn Lectures into<br>
+        <span class="grad-blue">Smart Notes &amp; Quizzes</span>
+      </h1>
+
+      <p class="hero-subtitle">
+        Upload any lecture — audio, video, or document — and let AI generate
+        instant summaries, key concepts, and practice quizzes.
+      </p>
+
+      <div class="hero-pills" role="list" aria-label="Supported features">
+        <span class="hero-pill" role="listitem">🎙️ Audio Transcription</span>
+        <span class="hero-pill" role="listitem">📝 Smart Summaries</span>
+        <span class="hero-pill" role="listitem">💡 Key Concepts</span>
+        <span class="hero-pill" role="listitem">❓ MCQ Generation</span>
+        <span class="hero-pill" role="listitem">📄 PDF &amp; DOCX</span>
+        <span class="hero-pill" role="listitem">⚡ Instant Results</span>
+      </div>
+    </header>
+
+    <!-- UPLOAD SECTION -->
+    <section class="upload-section" aria-label="File upload">
+
+      <!-- Demo Banner -->
+      <div class="demo-banner" role="note">
+        <span style="font-size:1.1rem;flex-shrink:0;">⚡</span>
+        <div>
+          <strong>Static Demo Mode</strong> — Runs entirely in your browser with realistic mock AI data.
+          For real AI, start <code>demo/backend/app.py</code> and set your <code>OPENAI_API_KEY</code>.
+        </div>
+      </div>
+
+      <!-- Upload Card -->
+      <div class="glass upload-card">
+
+        <!-- Drop Zone -->
+        <div
+          class="drop-zone"
+          id="dropZone"
+          role="button"
+          tabindex="0"
+          aria-label="Drop file here or click to browse"
+          onclick="document.getElementById('fileInput').click()"
+          ondragover="handleDragOver(event)"
+          ondragleave="handleDragLeave(event)"
+          ondrop="handleDrop(event)"
+          onkeydown="if(event.key==='Enter'||event.key===' ')document.getElementById('fileInput').click()"
+        >
+          <div class="scan-line" aria-hidden="true"></div>
+
+          <div class="drop-icon-ring" aria-hidden="true" id="dropIcon">📁</div>
+          <h2 class="drop-title" id="dropTitle">Drop your lecture file here</h2>
+          <p class="drop-sub" id="dropSub">Click to browse, or drag &amp; drop any file</p>
+
+          <div class="format-row" role="list" aria-label="Supported formats">
+            <span class="fmt-chip" role="listitem">MP3</span>
+            <span class="fmt-chip" role="listitem">WAV</span>
+            <span class="fmt-chip" role="listitem">MP4</span>
+            <span class="fmt-chip" role="listitem">WebM</span>
+            <span class="fmt-chip" role="listitem">PDF</span>
+            <span class="fmt-chip" role="listitem">DOCX</span>
+            <span class="fmt-chip" role="listitem">TXT</span>
+          </div>
+        </div>
+
+        <input
+          type="file"
+          id="fileInput"
+          accept=".mp3,.wav,.mp4,.webm,.pdf,.docx,.txt"
+          onchange="handleFileSelect(event)"
+          aria-label="File upload input"
+        />
+
+        <!-- File preview -->
+        <div class="file-preview" id="filePreview" role="status" aria-live="polite">
+          <span class="file-preview-icon" id="previewIcon" aria-hidden="true">📄</span>
+          <div>
+            <div class="file-name" id="previewName">—</div>
+            <div class="file-meta" id="previewMeta">—</div>
+          </div>
+          <button class="file-remove-btn" onclick="removeFile()" aria-label="Remove selected file">✕ Remove</button>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-row" id="actionRow">
+          <div class="action-btn-wrap">
+            <button
+              class="btn btn-primary"
+              id="btnSummary"
+              onclick="startProcessing('summary')"
+              disabled
+              aria-label="Generate summary from lecture"
+            >
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+              </svg>
+              Generate Summary
+            </button>
+            <span class="action-btn-desc">Quick notes &amp; key points</span>
+          </div>
+
+          <div class="action-btn-wrap">
+            <button
+              class="btn btn-cyan"
+              id="btnQuiz"
+              onclick="startProcessing('quiz')"
+              disabled
+              aria-label="Generate quiz from lecture"
+            >
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+              Generate Quiz
+            </button>
+            <span class="action-btn-desc">MCQs &amp; short answers</span>
+          </div>
+        </div>
+
+      </div><!-- /upload-card -->
+
+    </section><!-- /upload-section -->
+
+    <!-- HISTORY SECTION -->
+    <section class="history-wrap" id="historySection" style="display:none;" aria-label="Recent sessions">
+      <div class="section-label">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+        </svg>
+        Recent Sessions
+        <button
+          onclick="clearHistory()"
+          style="margin-left:auto;background:none;border:none;cursor:pointer;font-size:0.7rem;color:var(--text-3);letter-spacing:0.06em;"
+          aria-label="Clear session history"
+        >CLEAR ALL</button>
+      </div>
+      <div class="history-grid" id="historyGrid" role="list"></div>
+    </section>
+
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
