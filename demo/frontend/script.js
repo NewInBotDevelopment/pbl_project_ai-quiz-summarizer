@@ -1,7 +1,11 @@
 'use strict';
 
-// ✅ YOUR BACKEND URL
+// ✅ BACKEND URL
 const BACKEND_URL = "https://lecturai-backend.onrender.com";
+
+// ✅ Allowed file types (SYNC with backend)
+const ALLOWED_TYPES = ["mp3", "wav", "pdf", "docx", "txt"];
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 
 // ─── THEME ────────────────────────────────────────────────
 function applyTheme(mode) {
@@ -42,13 +46,32 @@ let _selectedFile = null;
 
 function handleFileSelect(e) {
   const f = e.target.files[0];
-  if (f) _setFile(f);
+  if (f) validateAndSetFile(f);
 }
 
 function handleDrop(e) {
   e.preventDefault();
   const f = e.dataTransfer?.files[0];
-  if (f) _setFile(f);
+  if (f) validateAndSetFile(f);
+}
+
+// ✅ VALIDATION BEFORE SETTING FILE
+function validateAndSetFile(file) {
+  const ext = file.name.split('.').pop().toLowerCase();
+
+  // ❌ Type check
+  if (!ALLOWED_TYPES.includes(ext)) {
+    alert("❌ Unsupported file type\nAllowed: mp3, wav, pdf, docx, txt");
+    return;
+  }
+
+  // ❌ Size check
+  if (file.size > MAX_FILE_SIZE) {
+    alert("❌ File too large (Max 20MB)");
+    return;
+  }
+
+  _setFile(file);
 }
 
 function _setFile(file) {
@@ -63,7 +86,7 @@ function _setFile(file) {
   document.getElementById('btnQuiz').disabled = false;
 }
 
-// ─── MAIN PROCESS FUNCTION (CONNECTED TO BACKEND) ─────────
+// ─── MAIN PROCESS FUNCTION ────────────────────────────────
 async function startProcessing(mode = 'summary') {
   if (!_selectedFile) {
     alert("Please select a file first");
@@ -80,6 +103,8 @@ async function startProcessing(mode = 'summary') {
     const formData = new FormData();
     formData.append("file", _selectedFile);
 
+    console.log("🚀 Sending to backend:", `${BACKEND_URL}/api/process`);
+
     status.textContent = "Uploading file...";
     bar.style.width = "20%";
 
@@ -88,14 +113,15 @@ async function startProcessing(mode = 'summary') {
       body: formData
     });
 
+    const data = await response.json();
+
+    // ✅ HANDLE BACKEND ERRORS PROPERLY
     if (!response.ok) {
-      throw new Error("Server error: " + response.status);
+      throw new Error(data.error || "Server error");
     }
 
     status.textContent = "Processing with AI...";
     bar.style.width = "70%";
-
-    const data = await response.json();
 
     status.textContent = "Finalizing...";
     bar.style.width = "100%";
@@ -120,8 +146,14 @@ async function startProcessing(mode = 'summary') {
     }, 500);
 
   } catch (err) {
-    console.error(err);
-    alert("Error: " + err.message);
+    console.error("❌ FULL ERROR:", err);
+
+    alert("❌ Error:\n" + err.message);
+
+    // ✅ RESET UI ON FAILURE
+    bar.style.width = "0%";
+    status.textContent = "Failed. Try again.";
+    document.getElementById('loadingOverlay')?.classList.remove('show');
   }
 }
 
