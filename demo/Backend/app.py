@@ -26,8 +26,12 @@ if not OPENAI_API_KEY and not GROQ_API_KEY:
 openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 groq_client   = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
-# ✅ Use environment-based model (future-proof)
-GROQ_MODEL = os.getenv("GROQ_MODEL", "llama3-70b-8192")
+# ✅ Multi-model fallback (AUTO SWITCH)
+GROQ_MODELS = [
+    os.getenv("GROQ_MODEL", "llama3-70b-8192"),
+    "mixtral-8x7b-32768",
+    "gemma-7b-it"
+]
 
 # ✅ Allowed formats
 ALLOWED_EXTENSIONS = {'pdf', 'docx', 'txt'}
@@ -75,27 +79,41 @@ def call_groq(prompt):
     if not groq_client:
         raise RuntimeError("Groq not available")
 
-    response = groq_client.chat.completions.create(
-        model=GROQ_MODEL,
-        messages=[{"role": "user", "content": prompt}]
-    )
-    return response.choices[0].message.content
+    last_error = None
+
+    for model in GROQ_MODELS:
+        try:
+            print(f"🔄 Trying Groq model: {model}")
+
+            response = groq_client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": prompt}]
+            )
+
+            print(f"✅ Success with model: {model}")
+            return response.choices[0].message.content
+
+        except Exception as e:
+            print(f"❌ Model failed: {model} → {e}")
+            last_error = e
+
+    raise RuntimeError(f"All Groq models failed: {last_error}")
 
 
 def call_ai(prompt):
-    # 🔥 Try OpenAI first
+    # 🔹 Try OpenAI
     try:
         return call_openai(prompt)
     except Exception as e:
         print("⚠️ OpenAI failed:", e)
 
-    # 🔥 Fallback to Groq
+    # 🔹 Try Groq (auto-switch models)
     try:
         return call_groq(prompt)
     except Exception as e:
-        print("⚠️ Groq failed:", e)
+        print("⚠️ All Groq models failed:", e)
 
-    # 🔥 Final fallback (never crash)
+    # 🔹 Final fallback (never crash)
     return "⚠️ AI service temporarily unavailable. Please try again later."
 
 
@@ -111,7 +129,7 @@ def generate_quiz(text):
 # ─── ROUTES ─────────────────────────────────────
 @app.route('/')
 def home():
-    return "🚀 Backend Running (OpenAI + Groq Ready)"
+    return "🚀 Backend Running (Auto-Switch AI Enabled)"
 
 
 @app.route('/api/health')
@@ -120,7 +138,7 @@ def health():
         "status": "ok",
         "openai": bool(openai_client),
         "groq": bool(groq_client),
-        "groq_model": GROQ_MODEL
+        "models": GROQ_MODELS
     })
 
 
