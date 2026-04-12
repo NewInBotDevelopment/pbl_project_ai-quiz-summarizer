@@ -2,13 +2,14 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 import tempfile
+import time
 
 from groq import Groq
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
-# ✅ File size limit
+# ✅ File size limit (20MB)
 app.config['MAX_CONTENT_LENGTH'] = 20 * 1024 * 1024
 
 # ✅ API KEY
@@ -19,14 +20,15 @@ if not GROQ_API_KEY:
 
 groq_client = Groq(api_key=GROQ_API_KEY)
 
-# ✅ Stable models
+# ✅ Stable models (ordered fallback)
 GROQ_MODELS = [
     "llama3-70b-8192",
     "mixtral-8x7b-32768"
 ]
 
-# ✅ Allowed files
+# ✅ Allowed file types
 ALLOWED_EXTENSIONS = {'pdf', 'docx', 'txt'}
+
 
 # ─── HELPERS ─────────────────────
 def allowed_file(filename):
@@ -37,7 +39,8 @@ def extract_text_from_txt(path):
     try:
         with open(path, 'r', encoding='utf-8', errors='ignore') as f:
             return f.read()
-    except:
+    except Exception as e:
+        print("TXT error:", e)
         return ""
 
 
@@ -50,7 +53,8 @@ def extract_text_from_pdf(path):
             for page in reader.pages:
                 text += page.extract_text() or ""
         return text
-    except:
+    except Exception as e:
+        print("PDF error:", e)
         return ""
 
 
@@ -59,51 +63,62 @@ def extract_text_from_docx(path):
         from docx import Document
         doc = Document(path)
         return "\n".join([p.text for p in doc.paragraphs])
-    except:
+    except Exception as e:
+        print("DOCX error:", e)
         return ""
 
 
-# ─── AI CALL ─────────────────────
+# ─── AI CALL (WITH RETRY + FALLBACK) ─────────────────────
 def call_groq(prompt):
     last_error = None
 
     for model in GROQ_MODELS:
-        try:
-            print(f"🔄 Trying model: {model}")
+        for attempt in range(2):  # retry each model once
+            try:
+                print(f"🔄 Trying model: {model} (attempt {attempt+1})")
 
-            response = groq_client.chat.completions.create(
-                model=model,
-                messages=[{"role": "user", "content": prompt}]
-            )
+                response = groq_client.chat.completions.create(
+                    model=model,
+                    messages=[{"role": "user", "content": prompt}]
+                )
 
-            return response.choices[0].message.content
+                result = response.choices[0].message.content
 
-        except Exception as e:
-            print(f"❌ Model failed: {model} → {e}")
-            last_error = e
+                if result:
+                    print(f"✅ Success: {model}")
+                    return result
 
-    raise RuntimeError(str(last_error))
+            except Exception as e:
+                print(f"❌ Failed: {model} → {e}")
+                last_error = e
+                time.sleep(1)  # wait before retry
+
+    raise RuntimeError(f"All models failed: {last_error}")
 
 
 # ─── AI FEATURES ─────────────────
 def generate_summary(text):
     try:
-        return call_groq(f"Summarize clearly:\n{text[:3000]}")
-    except:
+        result = call_groq(f"Summarize clearly:\n{text[:3000]}")
+        return result if result else "⚠️ No summary generated."
+    except Exception as e:
+        print("Summary error:", e)
         return "⚠️ Could not generate summary."
 
 
 def generate_quiz(text):
     try:
-        return call_groq(f"Create 3 MCQs with answers:\n{text[:3000]}")
-    except:
+        result = call_groq(f"Create 3 MCQs with answers:\n{text[:3000]}")
+        return result if result else "⚠️ No quiz generated."
+    except Exception as e:
+        print("Quiz error:", e)
         return "⚠️ Could not generate quiz."
 
 
 # ─── ROUTES ─────────────────────
 @app.route('/')
 def home():
-    return "🚀 Backend Running (Stable Mode)"
+    return "🚀 Backend Running (Production Ready)"
 
 
 @app.route('/api/health')
@@ -116,7 +131,10 @@ def health():
 
 @app.route('/api/process', methods=['POST'])
 def process():
+    path = None  # ✅ prevent crash in finally
+
     try:
+        # 🔹 Validate file
         if 'file' not in request.files:
             return jsonify({"error": "No file uploaded"}), 400
 
@@ -130,11 +148,14 @@ def process():
 
         ext = file.filename.rsplit('.', 1)[1].lower()
 
+        # 🔹 Save temp file
         with tempfile.NamedTemporaryFile(delete=False, suffix=f".{ext}") as tmp:
             file.save(tmp.name)
             path = tmp.name
 
-        # ─── TEXT EXTRACTION ───
+        print("📁 Processing:", file.filename)
+
+        # 🔹 Extract text
         if ext == 'pdf':
             text = extract_text_from_pdf(path)
         elif ext == 'docx':
@@ -142,15 +163,21 @@ def process():
         else:
             text = extract_text_from_txt(path)
 
-        print("📝 Extracted:", text[:200])
+        print("📝 Extracted preview:", text[:200])
 
-        # ✅ Fix empty text
+        # 🔹 Fix empty input
         if not text or len(text.strip()) < 5:
             text = "Short input. Generate a basic summary and quiz."
 
-        # ─── AI PROCESS ───
+        # 🔹 AI processing
         summary = generate_summary(text)
         quiz = generate_quiz(text)
+
+        # ✅ FINAL SAFETY (never return empty)
+        if not summary:
+            summary = "⚠️ Summary unavailable."
+        if not quiz:
+            quiz = "⚠️ Quiz unavailable."
 
         return jsonify({
             "summary": summary,
@@ -158,15 +185,16 @@ def process():
         })
 
     except Exception as e:
-        print("❌ ERROR:", e)
+        print("❌ CRITICAL ERROR:", e)
         return jsonify({"error": "Server failed processing file"}), 500
 
     finally:
+        # 🔹 Safe cleanup
         try:
-            if os.path.exists(path):
+            if path and os.path.exists(path):
                 os.remove(path)
-        except:
-            pass
+        except Exception as e:
+            print("Cleanup error:", e)
 
 
 if __name__ == "__main__":
