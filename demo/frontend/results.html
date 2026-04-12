@@ -252,58 +252,5 @@
 
   <script src="script.js"></script>
   <script src="results.js"></script>
-
-<script>
-const data = JSON.parse(localStorage.getItem("lecturAI_results"));
-
-if (!data) {
-  alert("No results found. Please upload again.");
-} else {
-
-  // ─── SUMMARY ───
-  const quick = document.getElementById("quickSummaryBody");
-  const detail = document.getElementById("detailSummaryBody");
-
-  if (quick) {
-    quick.innerHTML = "";
-    data.summary.split("\n").forEach(line => {
-      if (line.trim()) {
-        const li = document.createElement("li");
-        li.textContent = line;
-        quick.appendChild(li);
-      }
-    });
-  }
-
-  if (detail) {
-    detail.textContent = data.summary;
-  }
-
-  // ─── QUIZ (FIXED) ───
-  const quizContainer = document.getElementById("mcqBody");
-
-  if (quizContainer) {
-    quizContainer.innerHTML = "";
-
-    data.quiz.split("\n").forEach(q => {
-      if (q.trim()) {
-        const div = document.createElement("div");
-        div.style.marginBottom = "10px";
-        div.textContent = q;
-        quizContainer.appendChild(div);
-      }
-    });
-  }
-
-  // ─── STATS FIX ───
-  document.getElementById("statWords").textContent =
-    data.summary.split(" ").length + " words";
-
-  document.getElementById("statQuiz").textContent =
-    data.quiz.split("\n").length + " items";
-
-  document.getElementById("resultsFilename").textContent = "Processed File";
-}
-</script>
 </body>
 </html>
