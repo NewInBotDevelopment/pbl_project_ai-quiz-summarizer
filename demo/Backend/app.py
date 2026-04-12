@@ -3,37 +3,29 @@ from flask_cors import CORS
 import os
 import tempfile
 
-# OpenAI (optional)
-from openai import OpenAI
-
-# Groq (fallback)
 from groq import Groq
 
 app = Flask(__name__)
 CORS(app)
 
-# ✅ Limit file size
+# ✅ File size limit (20MB)
 app.config['MAX_CONTENT_LENGTH'] = 20 * 1024 * 1024
 
-# ✅ API Keys
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-GROQ_API_KEY   = os.getenv("GROQ_API_KEY")
+# ✅ API Key
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-if not OPENAI_API_KEY and not GROQ_API_KEY:
-    raise ValueError("❌ Set OPENAI_API_KEY or GROQ_API_KEY")
+if not GROQ_API_KEY:
+    raise ValueError("❌ GROQ_API_KEY not set")
 
-# ✅ Clients
-openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
-groq_client   = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
+groq_client = Groq(api_key=GROQ_API_KEY)
 
-# ✅ Multi-model fallback (AUTO SWITCH)
+# ✅ Stable working models
 GROQ_MODELS = [
-    os.getenv("GROQ_MODEL", "llama3-70b-8192"),
-    "mixtral-8x7b-32768",
-    "gemma-7b-it"
+    "llama3-70b-8192",
+    "mixtral-8x7b-32768"
 ]
 
-# ✅ Allowed formats
+# ✅ Allowed file types
 ALLOWED_EXTENSIONS = {'pdf', 'docx', 'txt'}
 
 
@@ -63,81 +55,49 @@ def extract_text_from_docx(path):
     return "\n".join([p.text for p in doc.paragraphs])
 
 
-# ─── AI CALLERS ─────────────────────────────────
-def call_openai(prompt):
-    if not openai_client:
-        raise RuntimeError("OpenAI not available")
-
-    response = openai_client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "user", "content": prompt}]
-    )
-    return response.choices[0].message.content
-
-
+# ─── AI CALL (AUTO SWITCH) ───────────────────────
 def call_groq(prompt):
-    if not groq_client:
-        raise RuntimeError("Groq not available")
-
     last_error = None
 
     for model in GROQ_MODELS:
         try:
-            print(f"🔄 Trying Groq model: {model}")
+            print(f"🔄 Trying model: {model}")
 
             response = groq_client.chat.completions.create(
                 model=model,
                 messages=[{"role": "user", "content": prompt}]
             )
 
-            print(f"✅ Success with model: {model}")
+            print(f"✅ Success: {model}")
             return response.choices[0].message.content
 
         except Exception as e:
-            print(f"❌ Model failed: {model} → {e}")
+            print(f"❌ Failed: {model} → {e}")
             last_error = e
 
-    raise RuntimeError(f"All Groq models failed: {last_error}")
-
-
-def call_ai(prompt):
-    # 🔹 Try OpenAI
-    try:
-        return call_openai(prompt)
-    except Exception as e:
-        print("⚠️ OpenAI failed:", e)
-
-    # 🔹 Try Groq (auto-switch models)
-    try:
-        return call_groq(prompt)
-    except Exception as e:
-        print("⚠️ All Groq models failed:", e)
-
-    # 🔹 Final fallback (never crash)
-    return "⚠️ AI service temporarily unavailable. Please try again later."
+    raise RuntimeError(f"All models failed: {last_error}")
 
 
 # ─── AI FEATURES ────────────────────────────────
 def generate_summary(text):
-    return call_ai(f"Summarize this lecture clearly:\n{text[:3000]}")
+    return call_groq(f"Summarize this lecture clearly:\n{text[:3000]}")
 
 
 def generate_quiz(text):
-    return call_ai(f"Create 3 MCQs with answers:\n{text[:3000]}")
+    return call_groq(f"Create 3 MCQs with answers:\n{text[:3000]}")
 
 
 # ─── ROUTES ─────────────────────────────────────
 @app.route('/')
 def home():
-    return "🚀 Backend Running (Auto-Switch AI Enabled)"
+    return "🚀 Backend Running (Groq Only Mode)"
 
 
 @app.route('/api/health')
 def health():
     return jsonify({
         "status": "ok",
-        "openai": bool(openai_client),
-        "groq": bool(groq_client),
+        "groq": True,
         "models": GROQ_MODELS
     })
 
@@ -164,6 +124,7 @@ def process():
     try:
         print("📁 Processing:", file.filename)
 
+        # 🔹 Extract text
         if ext == 'pdf':
             text = extract_text_from_pdf(path)
         elif ext == 'docx':
@@ -171,9 +132,13 @@ def process():
         else:
             text = extract_text_from_txt(path)
 
-        if not text or len(text.strip()) < 20:
-            return jsonify({"error": "No readable content"}), 400
+        print("📝 Extracted:", text[:200])
 
+        # ✅ Prevent empty text crash
+        if not text or len(text.strip()) < 5:
+            text = "This is a short document. Generate a simple summary and quiz."
+
+        # 🔹 AI processing
         summary = generate_summary(text)
         quiz = generate_quiz(text)
 
