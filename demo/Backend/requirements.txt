@@ -1,23 +1,14 @@
 # ================================================
-# AI Lecture Summarizer — Python Dependencies
-# Manipal University Jaipur, CSE PBL 2026
-# ================================================
-# Install all at once:
-#   pip install -r requirements.txt
+# AI Lecture Summarizer — CLEAN PRODUCTION VERSION
 # ================================================
 
 # ── Web Framework ──
 flask==3.0.3
 flask-cors==4.0.1
 
-# ── OpenAI SDK (GPT + Whisper API) ──
+# ── AI APIs ──
 openai>=1.30.0
-
-# ── Groq SDK (llama3-8b-8192 fallback) ──
 groq>=1.0.0
-
-# ── Local Whisper ASR (runs on CPU) ──
-openai-whisper==20231117
 
 # ── PDF text extraction ──
 PyPDF2==3.0.1
@@ -25,16 +16,7 @@ PyPDF2==3.0.1
 # ── DOCX text extraction ──
 python-docx==1.1.2
 
-# ── Video/Audio processing ──
-moviepy==1.0.3
-
-# ── Audio handling (Whisper dependency) ──
-soundfile==0.12.1
-ffmpeg-python==0.2.0
-
 # ── Utilities ──
-python-dotenv==1.0.1
 gunicorn==22.0.0
+requests
 
-# ── NumPy (Whisper dependency) ──
-numpy>=1.24.0,<2.0.0
