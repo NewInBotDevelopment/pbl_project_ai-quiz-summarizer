@@ -536,8 +536,7 @@ body {
   opacity: 0; pointer-events: none;
   transition: opacity var(--t-normal);
 }
-.loading-overlay.show,
-.loading-overlay.active { opacity: 1; pointer-events: all; }
+.loading-overlay.show { opacity: 1; pointer-events: all; }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 
 .loading-spinner-wrap {
@@ -649,20 +648,13 @@ body {
 .h-date { font-size: 0.68rem; color: var(--text-3); margin-top: 4px; }
 
 /* ─── LIGHT MODE ─── */
-body.light, :root[data-theme="light"] body, html[data-theme="light"] body {
+body.light {
   --bg-0: #F8FAFC; --bg-1: #F1F5F9; --bg-2: #E2E8F0;
   --bg-surface: rgba(255,255,255,0.8); --bg-surface-hover: rgba(0,0,0,0.04);
   --bg-surface-active: rgba(59,130,246,0.08);
   --border: rgba(0,0,0,0.09); --border-hover: rgba(0,0,0,0.15);
   --text-1: #0F172A; --text-2: #334155; --text-3: #64748B;
-  background: #F8FAFC; color: #0F172A;
 }
-html[data-theme="light"] body .bg-orb { opacity: 0.06; }
-html[data-theme="light"] body .bg-grid { background-image: linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px); }
-html[data-theme="light"] body .drop-zone { background: rgba(59,130,246,0.02); border-color: rgba(59,130,246,0.18); }
-html[data-theme="light"] body .fmt-chip { background: rgba(0,0,0,0.04); }
-html[data-theme="light"] body .loading-overlay { background: rgba(248,250,252,0.92); }
-html[data-theme="light"] body .glass, html[data-theme="light"] body .glass-sm { background: rgba(255,255,255,0.75); }
 body.light .bg-orb { opacity: 0.06; }
 body.light .bg-grid { background-image: linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px); }
 body.light .drop-zone { background: rgba(59,130,246,0.02); border-color: rgba(59,130,246,0.18); }
