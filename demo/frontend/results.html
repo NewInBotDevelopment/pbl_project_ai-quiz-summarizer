@@ -252,5 +252,45 @@
 
   <script src="script.js"></script>
   <script src="results.js"></script>
+
+  <script>
+const data = JSON.parse(localStorage.getItem("lecturAI_results"));
+
+console.log("📦 Loaded:", data);
+
+// ❌ If no data
+if (!data) {
+  alert("No results found. Upload again.");
+} else {
+
+  // ✅ SUMMARY
+  const quick = document.getElementById("quickSummaryBody");
+  const detail = document.getElementById("detailSummaryBody");
+
+  if (quick) {
+    quick.innerHTML = "";
+    data.summary.split("\n").forEach(line => {
+      if (line.trim()) {
+        const li = document.createElement("li");
+        li.textContent = line;
+        quick.appendChild(li);
+      }
+    });
+  }
+
+  if (detail) {
+    detail.textContent = data.summary;
+  }
+
+  // ✅ STATS FIX
+  document.getElementById("statWords").textContent =
+    data.summary ? data.summary.split(" ").length + " words" : "0 words";
+
+  document.getElementById("statQuiz").textContent =
+    data.quiz ? "Generated" : "0 questions";
+
+  document.getElementById("resultsFilename").textContent = "Processed File";
+}
+</script>
 </body>
 </html>
