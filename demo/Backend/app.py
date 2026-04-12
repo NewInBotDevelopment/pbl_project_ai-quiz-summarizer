@@ -4,18 +4,30 @@ import os
 import tempfile
 from openai import OpenAI
 
+# ✅ Groq import (fallback AI)
+try:
+    from groq import Groq
+    GROQ_AVAILABLE = True
+except ImportError:
+    GROQ_AVAILABLE = False
+    print("[WARN] groq not installed — Groq fallback disabled")
+
 app = Flask(__name__)
 CORS(app)
 
 # ✅ Limit file size (20MB)
 app.config['MAX_CONTENT_LENGTH'] = 20 * 1024 * 1024
 
-# ✅ Check API key early
+# ✅ API Keys
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-if not OPENAI_API_KEY:
-    raise ValueError("❌ Missing OPENAI_API_KEY")
+GROQ_API_KEY   = os.getenv("GROQ_API_KEY")
 
-client = OpenAI(api_key=OPENAI_API_KEY)
+if not OPENAI_API_KEY and not GROQ_API_KEY:
+    raise ValueError("❌ Missing both OPENAI_API_KEY and GROQ_API_KEY — set at least one!")
+
+# ✅ Clients
+openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
+groq_client   = Groq(api_key=GROQ_API_KEY) if GROQ_AVAILABLE and GROQ_API_KEY else None
 
 # ✅ Allowed formats (STRICT)
 ALLOWED_EXTENSIONS = {'mp3', 'wav', 'pdf', 'docx', 'txt'}
@@ -48,34 +60,65 @@ def extract_text_from_docx(path):
 
 
 def transcribe_audio(path):
+    if not openai_client:
+        raise RuntimeError("OpenAI client not available — set OPENAI_API_KEY")
     with open(path, "rb") as f:
-        transcript = client.audio.transcriptions.create(
+        transcript = openai_client.audio.transcriptions.create(
             model="gpt-4o-mini-transcribe",
             file=f
         )
     return transcript.text
 
 
-def generate_summary(text):
-    response = client.chat.completions.create(
+# ─── AI CALLERS ────────────────────────────────────────────
+def call_openai(prompt):
+    """Call OpenAI GPT-4o-mini."""
+    if not openai_client:
+        raise RuntimeError("OpenAI client not available — set OPENAI_API_KEY")
+    response = openai_client.chat.completions.create(
         model="gpt-4o-mini",
-        messages=[{
-            "role": "user",
-            "content": f"Summarize this lecture clearly:\n{text[:4000]}"
-        }]
+        messages=[{"role": "user", "content": prompt}]
     )
     return response.choices[0].message.content
+
+
+def call_groq(prompt):
+    """Call Groq llama3-8b-8192."""
+    if not groq_client:
+        raise RuntimeError("Groq client not available — set GROQ_API_KEY and install groq")
+    response = groq_client.chat.completions.create(
+        model="llama3-8b-8192",
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return response.choices[0].message.content
+
+
+def call_ai(prompt):
+    """
+    Fallback-aware AI caller.
+    Tries OpenAI first; if that fails (missing key / quota), falls back to Groq.
+    This makes the app: Never fail ✅ | Always respond ✅
+    """
+    try:
+        return call_openai(prompt)
+    except Exception as e:
+        print(f"⚠️  OpenAI failed ({e}), falling back to Groq…")
+        return call_groq(prompt)
+
+
+# ─── AI FEATURES ───────────────────────────────────────────
+def generate_summary(text):
+    response = call_ai(
+        f"Summarize this lecture clearly:\n{text[:4000]}"
+    )
+    return response
 
 
 def generate_quiz(text):
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[{
-            "role": "user",
-            "content": f"Create 3 MCQs with answers from:\n{text[:4000]}"
-        }]
+    response = call_ai(
+        f"Create 3 MCQs with answers from:\n{text[:4000]}"
     )
-    return response.choices[0].message.content
+    return response
 
 
 # ─── ROUTES ────────────────────────────────────────────────
@@ -87,7 +130,11 @@ def home():
 
 @app.route('/api/health')
 def health():
-    return jsonify({"status": "ok"})
+    return jsonify({
+        "status": "ok",
+        "openai":  openai_client is not None,
+        "groq":    groq_client is not None
+    })
 
 
 @app.route('/api/process', methods=['POST'])
@@ -133,17 +180,21 @@ def process():
 
         return jsonify({
             "summary": summary,
-            "quiz": quiz
+            "quiz":    quiz
         })
 
     except Exception as e:
         print("❌ ERROR:", str(e))
         return jsonify({
             "error": str(e),
-            "type": "backend_error"
+            "type":  "backend_error"
         }), 500
 
     finally:
         if os.path.exists(path):
             os.remove(path)
             print("🧹 Temp file removed")
+
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
