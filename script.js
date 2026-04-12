@@ -85,70 +85,60 @@ window.addEventListener('load', () => {
   const ctx = document.getElementById('resultsChart');
   if (!ctx) return;
 
-  const data = {
-    labels: ['Transcription\nAccuracy', 'Summary\nQuality', 'Quiz\nRelevance', 'Response\nSpeed', 'User\nSatisfaction'],
-    datasets: [
-      {
-        label: 'Existing System',
-        data: [58, 52, 48, 40, 55],
-        backgroundColor: 'rgba(148, 163, 184, 0.15)',
-        borderColor: 'rgba(148, 163, 184, 0.5)',
-        borderWidth: 2,
-        borderRadius: 8,
-        borderSkipped: false,
-      },
-      {
-        label: 'Our Solution',
-        data: [88, 82, 80, 90, 92],
-        backgroundColor: 'rgba(59, 130, 246, 0.25)',
-        borderColor: 'rgba(96, 165, 250, 0.8)',
-        borderWidth: 2,
-        borderRadius: 8,
-        borderSkipped: false,
-      }
-    ]
-  };
-
   new Chart(ctx, {
     type: 'bar',
-    data: data,
+    data: {
+      labels: ['Existing System', 'Our Solution'],
+      datasets: [{
+        data: [58, 88],
+        backgroundColor: [
+          'rgba(100, 116, 139, 0.35)',
+          'rgba(59, 130, 246, 0.7)'
+        ],
+        borderColor: [
+          'rgba(100, 116, 139, 0)',
+          'rgba(59, 130, 246, 0)'
+        ],
+        borderWidth: 0,
+        borderRadius: 6,
+        borderSkipped: false,
+        barThickness: 60,
+      }]
+    },
     options: {
       responsive: true,
       maintainAspectRatio: true,
       plugins: {
-        legend: {
-          labels: {
-            color: '#94A3B8',
-            font: { family: 'Inter', size: 12 },
-            usePointStyle: true,
-            pointStyle: 'circle',
-          }
-        },
+        legend: { display: false },
         tooltip: {
-          backgroundColor: 'rgba(15, 23, 42, 0.9)',
-          borderColor: 'rgba(59,130,246,0.3)',
+          backgroundColor: 'rgba(8, 12, 24, 0.95)',
+          borderColor: 'rgba(59,130,246,0.25)',
           borderWidth: 1,
           titleColor: '#F1F5F9',
-          bodyColor: '#94A3B8',
+          bodyColor: '#64748B',
+          padding: 12,
           callbacks: {
-            label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y}%`
+            label: c => ` ${c.parsed.y}%`
           }
         }
       },
       scales: {
         x: {
-          grid: { color: 'rgba(255,255,255,0.04)' },
+          grid: { display: false },
+          border: { display: false },
           ticks: {
-            color: '#64748B',
+            color: '#475569',
             font: { family: 'Inter', size: 11 }
           }
         },
         y: {
-          grid: { color: 'rgba(255,255,255,0.04)' },
+          grid: { color: 'rgba(255,255,255,0.04)', drawBorder: false },
+          border: { display: false },
           ticks: {
-            color: '#64748B',
-            font: { family: 'Inter', size: 11 },
-            callback: v => v + '%'
+            color: '#475569',
+            font: { family: 'Inter', size: 10 },
+            callback: v => v,
+            stepSize: 10
           },
           max: 100,
           min: 0
