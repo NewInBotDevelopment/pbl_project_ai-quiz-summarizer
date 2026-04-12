@@ -4,22 +4,21 @@ const BACKEND_URL = "https://lecturai-backend.onrender.com";
 let _selectedFile = null;
 
 // ─── THEME ────────────────────────────────────
-(function initTheme() {
-  const saved = localStorage.getItem('lecturAI_theme') || 'dark';
-  document.documentElement.setAttribute('data-theme', saved);
-  const btn = document.getElementById('themeToggle');
-  if (btn) btn.textContent = saved === 'dark' ? '☀️' : '🌙';
-})();
-
 function toggleTheme() {
-  const html = document.documentElement;
-  const current = html.getAttribute('data-theme') || 'dark';
-  const next = current === 'dark' ? 'light' : 'dark';
-  html.setAttribute('data-theme', next);
-  localStorage.setItem('lecturAI_theme', next);
+  document.body.classList.toggle('light');
   const btn = document.getElementById('themeToggle');
-  if (btn) btn.textContent = next === 'dark' ? '☀️' : '🌙';
+  if (btn) btn.classList.toggle('light');
+  localStorage.setItem('lecturAI_theme', document.body.classList.contains('light') ? 'light' : 'dark');
 }
+
+// Restore saved theme on load (class-based, matches original CSS)
+(function restoreTheme() {
+  if (localStorage.getItem('lecturAI_theme') === 'light') {
+    document.body.classList.add('light');
+    const btn = document.getElementById('themeToggle');
+    if (btn) btn.classList.add('light');
+  }
+})();
 
 // ─── FILE PREVIEW UPDATE ──────────────────────
 function _updateFilePreview(file) {
