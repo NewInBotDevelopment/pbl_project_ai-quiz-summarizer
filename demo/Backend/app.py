@@ -26,8 +26,11 @@ if not OPENAI_API_KEY and not GROQ_API_KEY:
 openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 groq_client   = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
+# ✅ Use environment-based model (future-proof)
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama3-70b-8192")
+
 # ✅ Allowed formats
-ALLOWED_EXTENSIONS = {'pdf', 'docx', 'txt'}  # 🔥 Removed audio (causing errors)
+ALLOWED_EXTENSIONS = {'pdf', 'docx', 'txt'}
 
 
 # ─── HELPERS ─────────────────────────────────────
@@ -73,23 +76,32 @@ def call_groq(prompt):
         raise RuntimeError("Groq not available")
 
     response = groq_client.chat.completions.create(
-        model="llama3-8b-8192",
+        model=GROQ_MODEL,
         messages=[{"role": "user", "content": prompt}]
     )
     return response.choices[0].message.content
 
 
 def call_ai(prompt):
+    # 🔥 Try OpenAI first
     try:
         return call_openai(prompt)
     except Exception as e:
-        print("⚠️ OpenAI failed → using Groq:", e)
+        print("⚠️ OpenAI failed:", e)
+
+    # 🔥 Fallback to Groq
+    try:
         return call_groq(prompt)
+    except Exception as e:
+        print("⚠️ Groq failed:", e)
+
+    # 🔥 Final fallback (never crash)
+    return "⚠️ AI service temporarily unavailable. Please try again later."
 
 
 # ─── AI FEATURES ────────────────────────────────
 def generate_summary(text):
-    return call_ai(f"Summarize this lecture:\n{text[:3000]}")
+    return call_ai(f"Summarize this lecture clearly:\n{text[:3000]}")
 
 
 def generate_quiz(text):
@@ -107,7 +119,8 @@ def health():
     return jsonify({
         "status": "ok",
         "openai": bool(openai_client),
-        "groq": bool(groq_client)
+        "groq": bool(groq_client),
+        "groq_model": GROQ_MODEL
     })
 
 
@@ -117,6 +130,9 @@ def process():
         return jsonify({"error": "No file uploaded"}), 400
 
     file = request.files['file']
+
+    if file.filename == '':
+        return jsonify({"error": "Empty filename"}), 400
 
     if not allowed_file(file.filename):
         return jsonify({"error": "Only PDF, DOCX, TXT supported"}), 400
