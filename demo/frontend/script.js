@@ -3,46 +3,55 @@
 const BACKEND_URL = "https://lecturai-backend.onrender.com";
 let _selectedFile = null;
 
-// ─── FILE SELECT ───
 function handleFileSelect(e) {
   const f = e.target.files[0];
   if (f) _selectedFile = f;
 }
 
-// ─── MAIN PROCESS ───
 async function startProcessing() {
   if (!_selectedFile) {
     alert("Select a file first");
     return;
   }
 
+  const formData = new FormData();
+  formData.append("file", _selectedFile);
+
   try {
-    const formData = new FormData();
-    formData.append("file", _selectedFile);
+    console.log("🚀 Calling API...");
 
-    console.log("🚀 Sending request...");
+    let response;
 
-    const response = await fetch(`${BACKEND_URL}/api/process`, {
-      method: "POST",
-      body: formData
-    });
+    // ✅ RETRY LOGIC (Render cold start fix)
+    for (let i = 0; i < 2; i++) {
+      try {
+        response = await fetch(`${BACKEND_URL}/api/process`, {
+          method: "POST",
+          body: formData
+        });
+        break;
+      } catch (err) {
+        console.log("Retrying...");
+        await new Promise(r => setTimeout(r, 2000));
+      }
+    }
 
     const data = await response.json();
-
-    console.log("✅ Response:", data);
 
     if (!response.ok) {
       throw new Error(data.error || "Server error");
     }
 
-    // ✅ Save data
+    // ✅ SAFETY fallback
+    if (!data.summary) data.summary = "No summary generated";
+    if (!data.quiz) data.quiz = "No quiz generated";
+
     localStorage.setItem("lecturAI_results", JSON.stringify(data));
 
-    // ✅ Redirect
     window.location.href = "results.html";
 
   } catch (err) {
-    console.error("❌ Error:", err);
+    console.error(err);
     alert("Error: " + err.message);
   }
 }
