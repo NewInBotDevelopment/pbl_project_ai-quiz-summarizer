@@ -13,6 +13,12 @@ flask-cors==4.0.1
 # ── OpenAI SDK (GPT + Whisper API) ──
 openai>=1.30.0
 
+# ── Groq SDK (llama3-8b-8192 fallback) ──
+groq>=1.0.0
+
+# ── Local Whisper ASR (runs on CPU) ──
+openai-whisper==20231117
+
 # ── PDF text extraction ──
 PyPDF2==3.0.1
 
