@@ -23,9 +23,10 @@ groq_client = Groq(api_key=GROQ_API_KEY)
 
 # ✅ Valid Groq models (ordered fallback)
 GROQ_MODELS = [
-    "llama3-70b-8192",
-    "llama3-8b-8192",
-    "gemma2-9b-it"
+    "llama-3.3-70b-versatile",
+    "llama-3.1-70b-versatile",
+    "llama-3.1-8b-instant",
+    "mixtral-8x7b-32768"
 ]
 
 # ✅ Allowed file types
@@ -152,18 +153,19 @@ Return this exact JSON structure:
   }}
 }}
 
-Rules:
-- accuracy: Ensure every point is factual based ONLY on the provided text.
-- detail: Do not be generic. Use specific terms, names, and data from the text.
-- summary: 5 long, information-dense bullet points.
-- detailed_summary: Highly professional, academic tone, multi-paragraph.
-- key_points: exactly 8 technical concepts or main arguments.
-- quiz.mcqs: exactly 10 high-quality MCQs covering the entire document. "answer" is 0-3.
-- quiz.short_questions: exactly 5 challenging questions with detailed (100+ word) model answers.
-- Respond with ONLY the JSON object.
+    Rules:
+    - accuracy: Ensure every point is factual based ONLY on the provided text.
+    - detail: Do not be generic. Use specific terms, names, and data from the text.
+    - ignore_noise: Skip any Table of Contents, indices, or bibliographic references at the beginning/end. Focus on the core educational content.
+    - summary: 5 long, information-dense bullet points summarizing the main message.
+    - detailed_summary: Highly professional, academic tone, multi-paragraph (4-6 paragraphs).
+    - key_points: exactly 8 technical concepts or main arguments.
+    - quiz.mcqs: exactly 10 high-quality MCQs covering the entire document. "answer" is 0-3.
+    - quiz.short_questions: exactly 5 challenging questions with detailed (100+ word) model answers.
+    - Respond with ONLY the JSON object.
 
     Document text:
-    {text[:20000]}
+    {text[:40000]}
     """
     
     raw = call_groq(prompt, max_tokens=4096, json_mode=True)
