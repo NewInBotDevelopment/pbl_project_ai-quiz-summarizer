@@ -29,7 +29,7 @@ GROQ_MODELS = [
 ]
 
 # ✅ Allowed file types
-ALLOWED_EXTENSIONS = {'pdf', 'docx', 'txt'}
+ALLOWED_EXTENSIONS = {'pdf', 'docx', 'txt', 'mp3', 'wav', 'mp4', 'm4a', 'mpeg'}
 
 
 # ─── HELPERS ─────────────────────
@@ -70,6 +70,32 @@ def extract_text_from_docx(path):
         return ""
 
 
+def extract_transcript_from_audio(path):
+    """Transcribe audio/video using Groq Whisper."""
+    try:
+        print(f"🎙️ Transcribing: {path}")
+        with open(path, "rb") as file:
+            transcription = groq_client.audio.transcriptions.create(
+                file=(os.path.basename(path), file.read()),
+                model="whisper-large-v3",
+                response_format="verbose_json",
+            )
+        
+        # Combine segments with timestamps if possible, or just raw text
+        full_text = ""
+        if hasattr(transcription, 'segments'):
+            for s in transcription.segments:
+                timestamp = time.strftime('%M:%S', time.gmtime(s['start']))
+                full_text += f"[{timestamp}] {s['text']}\n"
+        else:
+            full_text = transcription.text
+            
+        return full_text
+    except Exception as e:
+        print("Whisper error:", e)
+        return ""
+
+
 # ─── AI CALL (WITH RETRY + FALLBACK) ─────────────────────
 def call_groq(prompt, max_tokens=2048):
     last_error = None
@@ -97,74 +123,41 @@ def call_groq(prompt, max_tokens=2048):
 
 # ─── STRUCTURED AI OUTPUT ────────
 def generate_structured_output(text, filename):
-    """Generate ALL AI content in a single structured Groq call."""
+    """Generate HIGHLY DETAILED AI content in a single structured Groq call."""
 
-    prompt = f"""You are an AI lecture analysis assistant. Analyze the following lecture/document text and respond with ONLY a valid JSON object — no markdown, no extra text.
+    prompt = f"""You are a world-class academic analysis assistant. Your goal is to provide a HIGHLY ACCURATE, DEEP, and RIGOROUS analysis of the following lecture/document. 
+    
+Analyze the text and respond with ONLY a valid JSON object — no markdown code fences, no extra text.
 
 Return this exact JSON structure:
 {{
-  "summary": ["bullet point 1", "bullet point 2", "bullet point 3", "bullet point 4", "bullet point 5"],
-  "detailed_summary": "A detailed 2-3 paragraph summary of the content.",
-  "key_points": ["concept 1", "concept 2", "concept 3", "concept 4", "concept 5", "concept 6"],
+  "summary": ["Detailed bullet 1", "Detailed bullet 2", "Detailed bullet 3", "Detailed bullet 4", "Detailed bullet 5"],
+  "detailed_summary": "A comprehensive 4-6 paragraph summary covering every major theme, nuance, and conclusion in the text.",
+  "key_points": ["Deep concept 1", "Deep concept 2", "Deep concept 3", "Deep concept 4", "Deep concept 5", "Deep concept 6", "Deep concept 7", "Deep concept 8"],
   "quiz": {{
     "mcqs": [
-      {{
-        "question": "Question text?",
-        "options": ["Option A", "Option B", "Option C", "Option D"],
-        "answer": 0,
-        "explanation": "Why this answer is correct."
-      }},
-      {{
-        "question": "Second question?",
-        "options": ["Option A", "Option B", "Option C", "Option D"],
-        "answer": 1,
-        "explanation": "Explanation here."
-      }},
-      {{
-        "question": "Third question?",
-        "options": ["Option A", "Option B", "Option C", "Option D"],
-        "answer": 2,
-        "explanation": "Explanation here."
-      }},
-      {{
-        "question": "Fourth question?",
-        "options": ["Option A", "Option B", "Option C", "Option D"],
-        "answer": 0,
-        "explanation": "Explanation here."
-      }},
-      {{
-        "question": "Fifth question?",
-        "options": ["Option A", "Option B", "Option C", "Option D"],
-        "answer": 3,
-        "explanation": "Explanation here."
-      }}
+      {{ "question": "...", "options": ["A", "B", "C", "D"], "answer": 0, "explanation": "..." }},
+      // ... total 10 MCQs ...
     ],
     "short_questions": [
-      {{
-        "question": "Short answer question 1?",
-        "answer": "Detailed model answer."
-      }},
-      {{
-        "question": "Short answer question 2?",
-        "answer": "Detailed model answer."
-      }},
-      {{
-        "question": "Short answer question 3?",
-        "answer": "Detailed model answer."
-      }}
+      {{ "question": "...", "answer": "..." }},
+      // ... total 5 short questions ...
     ]
   }}
 }}
 
 Rules:
-- summary: exactly 5 concise bullet strings
-- key_points: exactly 6 short concept strings
-- quiz.mcqs: exactly 5 MCQs, "answer" is the 0-based index of the correct option
-- quiz.short_questions: exactly 3 questions with detailed answers
-- Respond with ONLY the JSON object, nothing else.
+- accuracy: Ensure every point is factual based ONLY on the provided text.
+- detail: Do not be generic. Use specific terms, names, and data from the text.
+- summary: 5 long, information-dense bullet points.
+- detailed_summary: Highly professional, academic tone, multi-paragraph.
+- key_points: exactly 8 technical concepts or main arguments.
+- quiz.mcqs: exactly 10 high-quality MCQs covering the entire document. "answer" is 0-3.
+- quiz.short_questions: exactly 5 challenging questions with detailed (100+ word) model answers.
+- Respond with ONLY the JSON object.
 
 Document text:
-{text[:4000]}"""
+{text[:20000]}"""
 
     raw = call_groq(prompt, max_tokens=3000)
 
@@ -194,28 +187,44 @@ Document text:
 
 
 def _build_fallback(text):
-    """Return a basic structured result without a second API call."""
+    """Return a more robust fallback result if the AI call fails."""
     lines = [l.strip() for l in text.split("\n") if l.strip()]
-    bullets = lines[:5] if len(lines) >= 5 else lines + ["Key concept from the document."] * (5 - len(lines))
-    key_pts = lines[:6] if len(lines) >= 6 else lines + ["Important concept."] * (6 - len(lines))
+    bullets = lines[:5] if len(lines) >= 5 else (lines + ["Key lesson from the document."] * 5)[:5]
+    key_pts = lines[:8] if len(lines) >= 8 else (lines + ["Important technical concept."] * 8)[:8]
 
     return {
         "summary": bullets,
-        "detailed_summary": text[:1000],
+        "detailed_summary": f"Could not generate AI summary. Here is the direct text extraction:\n\n{text[:1500]}...",
         "key_points": key_pts,
         "quiz": {
             "mcqs": [
                 {
-                    "question": "What is the primary subject of this document?",
-                    "options": ["Topic A", "Topic B", "Topic C", "Topic D"],
+                    "question": "Based on the title or first lines, what is this document primarily about?",
+                    "options": [lines[0][:50] if lines else "Topic A", "General Overview", "Technical Deep-dive", "Case Study"],
                     "answer": 0,
-                    "explanation": "Based on the document content."
+                    "explanation": "Inferred from the document start."
+                },
+                {
+                    "question": "Which of these is likely a key theme?",
+                    "options": ["Analysis", "Implementation", "Overview", "All of the above"],
+                    "answer": 3,
+                    "explanation": "Fallback general question."
+                },
+                {
+                    "question": "The text extracted suggests a length of approximately how many words?",
+                    "options": ["Under 500", "Around 1000", "Over 2000", "Varies"],
+                    "answer": 3,
+                    "explanation": "Determined by extraction."
                 }
             ],
             "short_questions": [
                 {
-                    "question": "Summarize the key takeaways from this document.",
-                    "answer": text[:300] if text else "Please refer to the source document."
+                    "question": "What is the primary objective of this material?",
+                    "answer": "Please review the full transcript below as the AI was unable to process a high-detail summary for this specific file."
+                },
+                {
+                    "question": "List three important terms found in the text.",
+                    "answer": ", ".join(key_pts[:3])
                 }
             ]
         }
@@ -261,7 +270,10 @@ def process():
         print("📁 Processing:", file.filename)
 
         # Extract text
-        if ext == 'pdf':
+        audio_exts = {'mp3', 'wav', 'mp4', 'm4a', 'mpeg'}
+        if ext in audio_exts:
+            text = extract_transcript_from_audio(path)
+        elif ext == 'pdf':
             text = extract_text_from_pdf(path)
         elif ext == 'docx':
             text = extract_text_from_docx(path)
