@@ -97,18 +97,24 @@ def extract_transcript_from_audio(path):
 
 
 # ─── AI CALL (WITH RETRY + FALLBACK) ─────────────────────
-def call_groq(prompt, max_tokens=2048):
+def call_groq(prompt, max_tokens=4096, json_mode=False):
     last_error = None
 
     for model in GROQ_MODELS:
         for attempt in range(2):
             try:
                 print(f"🔄 Trying model: {model} (attempt {attempt+1})")
-                response = groq_client.chat.completions.create(
-                    model=model,
-                    messages=[{"role": "user", "content": prompt}],
-                    max_tokens=max_tokens
-                )
+                
+                kwargs = {
+                    "model": model,
+                    "messages": [{"role": "user", "content": prompt}],
+                    "max_tokens": max_tokens,
+                }
+                
+                if json_mode:
+                    kwargs["response_format"] = {"type": "json_object"}
+
+                response = groq_client.chat.completions.create(**kwargs)
                 result = response.choices[0].message.content
                 if result:
                     print(f"✅ Success: {model}")
@@ -157,32 +163,18 @@ Rules:
 - Respond with ONLY the JSON object.
 
 Document text:
-{text[:20000]}"""
+    # Increase snippet size if needed, but 20k is usually the sweet spot for 8k tokens
+    raw = call_groq(prompt, max_tokens=4096, json_mode=True)
 
-    raw = call_groq(prompt, max_tokens=3000)
-
-    # Strip markdown code fences if the model wraps the JSON
-    raw = raw.strip()
-    if raw.startswith("```"):
-        parts = raw.split("```")
-        # parts[1] is the content between first pair of ```
-        raw = parts[1]
-        if raw.lower().startswith("json"):
-            raw = raw[4:]
-    raw = raw.strip()
-
+    # Smart Extraction: Find the outermost braces
     try:
-        return json.loads(raw)
-    except json.JSONDecodeError as e:
-        print(f"⚠️ JSON parse failed: {e}")
-        # Best-effort: try to extract JSON from the response
         start = raw.find('{')
         end = raw.rfind('}') + 1
         if start != -1 and end > start:
-            try:
-                return json.loads(raw[start:end])
-            except Exception:
-                pass
+            return json.loads(raw[start:end])
+        return json.loads(raw)
+    except json.JSONDecodeError as e:
+        print(f"⚠️ JSON parse failed: {e}")
         raise RuntimeError(f"Could not parse AI response as JSON: {raw[:300]}")
 
 
