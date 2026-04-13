@@ -22,7 +22,7 @@ function toggleTheme() {
 
 // ─── FILE PREVIEW UPDATE ──────────────────────
 function _updateFilePreview(file) {
-  const icons = { pdf: '📄', docx: '📝', doc: '📝', txt: '📃', mp3: '🎵', wav: '🎵' };
+  const icons = { pdf: '📄', docx: '📝', doc: '📝', txt: '📃', mp3: '🎵', wav: '🎵', mp4: '🎬', m4a: '🎵' };
   const ext = file.name.split('.').pop().toLowerCase();
   const icon = icons[ext] || '📁';
   const sizeMB = (file.size / 1024 / 1024).toFixed(2);
