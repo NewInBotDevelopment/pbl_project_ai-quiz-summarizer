@@ -207,8 +207,8 @@ async function startProcessing(mode = 'summary') {
 
   } catch (err) {
     _hideLoading();
-    console.error('❌ Error:', err);
-    alert('Error: ' + err.message);
+    console.error('❌ Error details:', err);
+    alert('Analysis Failed: ' + err.message + '\n\nPlease ensure the backend server is running and your Groq API key is valid.');
   }
 }
 
