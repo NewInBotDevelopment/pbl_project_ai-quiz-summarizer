@@ -1,0 +1,124 @@
+# LecturAI Multi-Provider LLM Abstraction
+import os
+import time
+import json
+import logging
+from typing import List, Dict, Any, Optional
+from abc import ABC, abstractmethod
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(name)s: %(message)s')
+logger = logging.getLogger('LLMProvider')
+
+class LLMProvider(ABC):
+    @abstractmethod
+    def generate_chat(self, messages: List[Dict[str, str]], model: Optional[str] = None,
+                      temperature: float = 0.2, max_tokens: int = 4096,
+                      json_mode: bool = False, response_schema: Optional[Dict[str, Any]] = None) -> str:
+        pass
+
+    @abstractmethod
+    def get_models(self) -> List[str]:
+        pass
+
+class GroqProvider(LLMProvider):
+    def __init__(self, api_key: Optional[str] = None):
+        self.api_key = api_key or os.getenv('GROQ_API_KEY')
+        self.client = None
+        if self.api_key:
+            try:
+                from groq import Groq
+                self.client = Groq(api_key=self.api_key)
+            except Exception as e:
+                logger.error(f'Failed to initialize Groq client: {e}')
+
+        primary = os.getenv('GROQ_MODEL_PRIMARY', 'openai/gpt-oss-120b')
+        fallback = os.getenv('GROQ_MODEL_FALLBACK', 'openai/gpt-oss-20b')
+        extras_raw = os.getenv('GROQ_MODELS_EXTRA', 'llama-3.3-70b-versatile,llama-3.1-8b-instant')
+        extras = [m.strip() for m in extras_raw.split(',') if m.strip()]
+
+        models = [primary, fallback] + [m for m in extras if m not in (primary, fallback)]
+        seen = set()
+        self.models = [m for m in models if not (m in seen or seen.add(m))]
+        logger.info(f'GroqProvider initialized with models cascade: {self.models}')
+
+    def get_models(self) -> List[str]:
+        return list(self.models)
+
+    def generate_chat(self, messages: List[Dict[str, str]], model: Optional[str] = None,
+                      temperature: float = 0.2, max_tokens: int = 4096,
+                      json_mode: bool = False, response_schema: Optional[Dict[str, Any]] = None) -> str:
+        if not self.client:
+            raise RuntimeError('Groq API Key is not configured or Groq client failed to initialize.')
+
+        models_to_try = [model] if model else self.models
+        last_error = None
+
+        for m in models_to_try:
+            for attempt in range(1, 3):
+                try:
+                    logger.info(f'Attempting completion with model: {m} (attempt {attempt}/2)')
+                    kwargs = {
+                        'model': m,
+                        'messages': messages,
+                        'temperature': temperature,
+                        'max_tokens': max_tokens,
+                    }
+                    if json_mode or response_schema:
+                        kwargs['response_format'] = {'type': 'json_object'}
+
+                    response = self.client.chat.completions.create(**kwargs)
+                    content = response.choices[0].message.content
+                    if content and content.strip():
+                        logger.info(f'Successfully received response from {m} ({len(content)} chars)')
+                        return content
+                    else:
+                        raise ValueError(f'Empty response received from {m}')
+                except Exception as e:
+                    last_error = e
+                    err_msg = str(e).lower()
+                    logger.warning(f'Error from {m} attempt {attempt}: {e}')
+                    if 'rate_limit' in err_msg or '429' in err_msg or '503' in err_msg:
+                        sleep_s = attempt * 2
+                        logger.info(f'Sleeping {sleep_s}s for rate limit / transient error...')
+                        time.sleep(sleep_s)
+                    else:
+                        time.sleep(1)
+
+        raise RuntimeError(f'All configured Groq models failed. Last error: {last_error}')
+
+class OllamaProvider(LLMProvider):
+    def __init__(self, base_url: Optional[str] = None, model: Optional[str] = None):
+        self.base_url = base_url or os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434/v1')
+        self.model = model or os.getenv('OLLAMA_MODEL', 'llama3.2')
+        try:
+            from openai import OpenAI
+            self.client = OpenAI(base_url=self.base_url, api_key='ollama')
+        except Exception as e:
+            logger.error(f'Failed to initialize Ollama client: {e}')
+            self.client = None
+
+    def get_models(self) -> List[str]:
+        return [self.model]
+
+    def generate_chat(self, messages: List[Dict[str, str]], model: Optional[str] = None,
+                      temperature: float = 0.2, max_tokens: int = 4096,
+                      json_mode: bool = False, response_schema: Optional[Dict[str, Any]] = None) -> str:
+        if not self.client:
+            raise RuntimeError('Ollama client is not initialized.')
+        m = model or self.model
+        kwargs = {
+            'model': m,
+            'messages': messages,
+            'temperature': temperature,
+            'max_tokens': max_tokens
+        }
+        if json_mode:
+            kwargs['response_format'] = {'type': 'json_object'}
+        resp = self.client.chat.completions.create(**kwargs)
+        return resp.choices[0].message.content
+
+def get_provider() -> LLMProvider:
+    provider_type = os.getenv('LLM_PROVIDER', 'groq').lower()
+    if provider_type == 'ollama':
+        return OllamaProvider()
+    return GroqProvider()
