@@ -1,6 +1,7 @@
-'use strict';
-
-const BACKEND_URL = "http://127.0.0.1:5000";
+const DEFAULT_RENDER_BACKEND = "https://lecturai-backend.onrender.com";
+const BACKEND_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? (localStorage.getItem('lecturAI_backend_url') || "http://127.0.0.1:5000")
+  : (localStorage.getItem('lecturAI_backend_url') || DEFAULT_RENDER_BACKEND);
 let _selectedFile = null;
 
 // ─── THEME ────────────────────────────────────
@@ -167,22 +168,39 @@ async function startProcessing(mode = 'summary') {
   try {
     console.log('🚀 Calling API...');
 
+    let targetUrl = BACKEND_URL;
     let response;
-    // Retry once for Render cold-start
-    for (let i = 0; i < 2; i++) {
+    const maxAttempts = 5;
+    for (let i = 0; i < maxAttempts; i++) {
       try {
-        response = await fetch(`${BACKEND_URL}/api/process`, {
+        if (i > 0) {
+          const subtitle = document.getElementById('loadingSubtitle');
+          if (subtitle) {
+            subtitle.textContent = `Waking up cloud server (attempt ${i + 1}/${maxAttempts})…`;
+          }
+        }
+        response = await fetch(`${targetUrl}/api/process`, {
           method: 'POST',
           body: formData
         });
-        break;
+        if (response) break;
       } catch (err) {
-        console.log(`Attempt ${i+1} failed, retrying...`);
-        if (i === 0) await new Promise(r => setTimeout(r, 2000));
+        console.log(`Attempt ${i+1} on ${targetUrl} failed, retrying...`, err);
+        // If local backend is down, fall back to Render cloud backend
+        if (targetUrl.includes('127.0.0.1') || targetUrl.includes('localhost')) {
+          console.warn('Local backend unavailable, switching to Render cloud backend:', DEFAULT_RENDER_BACKEND);
+          targetUrl = DEFAULT_RENDER_BACKEND;
+        }
+        if (i < maxAttempts - 1) {
+          // Free tier Render spin-up typically takes ~30-40 seconds
+          await new Promise(r => setTimeout(r, 6000));
+        }
       }
     }
 
-    if (!response) throw new Error('Server not responding after 2 attempts. It may be starting up — please try again in 30 seconds.');
+    if (!response) {
+      throw new Error(`Cloud server (${targetUrl}) did not respond after ${maxAttempts} attempts.\nIf the server was asleep, it may need an extra 15-30 seconds to wake up.`);
+    }
 
     const data = await response.json();
     console.log('✅ Response:', data);
@@ -208,7 +226,7 @@ async function startProcessing(mode = 'summary') {
   } catch (err) {
     _hideLoading();
     console.error('❌ Error details:', err);
-    alert('Analysis Failed: ' + err.message + '\n\nPlease ensure the backend server is running and your Groq API key is valid.');
+    alert('Analysis Failed: ' + err.message + '\n\nPlease ensure your connection is stable and try again in a moment.');
   }
 }
 

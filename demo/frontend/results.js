@@ -7,6 +7,11 @@
 
 'use strict';
 
+const DEFAULT_RENDER_BACKEND = "https://lecturai-backend.onrender.com";
+const BACKEND_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? (localStorage.getItem('lecturAI_backend_url') || "http://127.0.0.1:5000")
+  : (localStorage.getItem('lecturAI_backend_url') || DEFAULT_RENDER_BACKEND);
+
 // ─── STATE ──────────────────────────────────────────────────
 let _data = null;
 let _answersVisible = false;
@@ -395,14 +400,32 @@ async function handleAskSubmit(e) {
   box.scrollTop = box.scrollHeight;
 
   try {
-    const res = await fetch('http://127.0.0.1:5000/api/ask', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        document_id: _data.document_id,
-        question: q
-      })
-    });
+    let targetUrl = BACKEND_URL;
+    let res;
+    try {
+      res = await fetch(`${targetUrl}/api/ask`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          document_id: _data.document_id,
+          question: q
+        })
+      });
+    } catch (netErr) {
+      if (targetUrl.includes('127.0.0.1') || targetUrl.includes('localhost')) {
+        targetUrl = DEFAULT_RENDER_BACKEND;
+        res = await fetch(`${targetUrl}/api/ask`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            document_id: _data.document_id,
+            question: q
+          })
+        });
+      } else {
+        throw netErr;
+      }
+    }
     const ansData = await res.json();
     loadingDiv.remove();
 

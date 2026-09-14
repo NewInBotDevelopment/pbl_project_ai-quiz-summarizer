@@ -31,9 +31,9 @@ class GroqProvider(LLMProvider):
             except Exception as e:
                 logger.error(f'Failed to initialize Groq client: {e}')
 
-        primary = os.getenv('GROQ_MODEL_PRIMARY', 'openai/gpt-oss-120b')
-        fallback = os.getenv('GROQ_MODEL_FALLBACK', 'openai/gpt-oss-20b')
-        extras_raw = os.getenv('GROQ_MODELS_EXTRA', 'llama-3.3-70b-versatile,llama-3.1-8b-instant')
+        primary = os.getenv('GROQ_MODEL_PRIMARY', 'llama-3.3-70b-versatile')
+        fallback = os.getenv('GROQ_MODEL_FALLBACK', 'llama-3.1-8b-instant')
+        extras_raw = os.getenv('GROQ_MODELS_EXTRA', 'llama-3.1-70b-versatile,gemma2-9b-it')
         extras = [m.strip() for m in extras_raw.split(',') if m.strip()]
 
         models = [primary, fallback] + [m for m in extras if m not in (primary, fallback)]
