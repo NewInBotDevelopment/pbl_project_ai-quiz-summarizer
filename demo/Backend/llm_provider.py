@@ -31,9 +31,9 @@ class GroqProvider(LLMProvider):
             except Exception as e:
                 logger.error(f'Failed to initialize Groq client: {e}')
 
-        primary = os.getenv('GROQ_MODEL_PRIMARY', 'llama-3.3-70b-versatile')
-        fallback = os.getenv('GROQ_MODEL_FALLBACK', 'llama-3.1-8b-instant')
-        extras_raw = os.getenv('GROQ_MODELS_EXTRA', 'llama-3.1-70b-versatile,gemma2-9b-it')
+        primary = os.getenv('GROQ_MODEL_PRIMARY', 'openai/gpt-oss-120b')
+        fallback = os.getenv('GROQ_MODEL_FALLBACK', 'openai/gpt-oss-20b')
+        extras_raw = os.getenv('GROQ_MODELS_EXTRA', 'qwen/qwen3.6-27b')
         extras = [m.strip() for m in extras_raw.split(',') if m.strip()]
 
         models = [primary, fallback] + [m for m in extras if m not in (primary, fallback)]
@@ -51,7 +51,7 @@ class GroqProvider(LLMProvider):
             raise RuntimeError('Groq API Key is not configured or Groq client failed to initialize.')
 
         models_to_try = [model] if model else self.models
-        last_error = None
+        errors = []
 
         for m in models_to_try:
             for attempt in range(1, 3):
@@ -74,9 +74,13 @@ class GroqProvider(LLMProvider):
                     else:
                         raise ValueError(f'Empty response received from {m}')
                 except Exception as e:
-                    last_error = e
                     err_msg = str(e).lower()
+                    errors.append(f'{m} (attempt {attempt}): {e}')
                     logger.warning(f'Error from {m} attempt {attempt}: {e}')
+                    # If the model is decommissioned or not found, do not retry this model
+                    if 'decommissioned' in err_msg or 'not found' in err_msg or 'does not exist' in err_msg:
+                        logger.info(f'Model {m} is decommissioned or invalid, skipping immediately.')
+                        break
                     if 'rate_limit' in err_msg or '429' in err_msg or '503' in err_msg:
                         sleep_s = attempt * 2
                         logger.info(f'Sleeping {sleep_s}s for rate limit / transient error...')
@@ -84,7 +88,7 @@ class GroqProvider(LLMProvider):
                     else:
                         time.sleep(1)
 
-        raise RuntimeError(f'All configured Groq models failed. Last error: {last_error}')
+        raise RuntimeError(f'All configured Groq models failed. Last error: {errors[-1] if errors else "unknown"}')
 
 class OllamaProvider(LLMProvider):
     def __init__(self, base_url: Optional[str] = None, model: Optional[str] = None):

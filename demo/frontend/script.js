@@ -49,6 +49,11 @@ function _updateFilePreview(file) {
 function handleFileSelect(e) {
   const f = e.target.files[0];
   if (!f) { alert('No file selected'); return; }
+  if (f.size > 25 * 1024 * 1024) {
+    alert(`Selected file is too large (${(f.size / 1024 / 1024).toFixed(1)} MB). Maximum allowed size is 25 MB.`);
+    e.target.value = '';
+    return;
+  }
   console.log('📄 Selected file:', f.name);
   _selectedFile = f;
   _updateFilePreview(f);
@@ -87,6 +92,10 @@ function handleDrop(e) {
 
   const f = e.dataTransfer.files[0];
   if (!f) return;
+  if (f.size > 25 * 1024 * 1024) {
+    alert(`Dropped file is too large (${(f.size / 1024 / 1024).toFixed(1)} MB). Maximum allowed size is 25 MB.`);
+    return;
+  }
   console.log('📄 Dropped file:', f.name);
   _selectedFile = f;
   _updateFilePreview(f);
