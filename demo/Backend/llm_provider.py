@@ -24,22 +24,50 @@ class GroqProvider(LLMProvider):
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or os.getenv('GROQ_API_KEY')
         self.client = None
+        self.models = []
         if self.api_key:
             try:
                 from groq import Groq
                 self.client = Groq(api_key=self.api_key)
+                # Dynamically discover active models for this API key
+                try:
+                    raw = self.client.models.list()
+                    available = [
+                        m.id for m in raw.data 
+                        if not any(k in m.id.lower() for k in ('whisper', 'guard', 'vision', 'safeguard', 'tts', 'embedding'))
+                    ]
+                    logger.info(f'Discovered active Groq chat models: {available}')
+                    priority = [
+                        'openai/gpt-oss-120b',
+                        'openai/gpt-oss-20b',
+                        'llama-3.3-70b-versatile',
+                        'llama-3.1-8b-instant',
+                        'qwen/qwen3.6-27b',
+                        'llama3-70b-8192',
+                        'llama3-8b-8192',
+                        'mixtral-8x7b-32768'
+                    ]
+                    ordered = [p for p in priority if p in available]
+                    for m in available:
+                        if m not in ordered:
+                            ordered.append(m)
+                    if ordered:
+                        self.models = ordered
+                except Exception as ex:
+                    logger.warning(f'Dynamic model query failed: {ex}')
             except Exception as e:
                 logger.error(f'Failed to initialize Groq client: {e}')
 
-        primary = os.getenv('GROQ_MODEL_PRIMARY', 'openai/gpt-oss-120b')
-        fallback = os.getenv('GROQ_MODEL_FALLBACK', 'openai/gpt-oss-20b')
-        extras_raw = os.getenv('GROQ_MODELS_EXTRA', 'qwen/qwen3.6-27b')
-        extras = [m.strip() for m in extras_raw.split(',') if m.strip()]
+        if not self.models:
+            primary = os.getenv('GROQ_MODEL_PRIMARY', 'openai/gpt-oss-120b')
+            fallback = os.getenv('GROQ_MODEL_FALLBACK', 'openai/gpt-oss-20b')
+            extras_raw = os.getenv('GROQ_MODELS_EXTRA', 'llama-3.3-70b-versatile,llama-3.1-8b-instant')
+            extras = [m.strip() for m in extras_raw.split(',') if m.strip()]
+            models = [primary, fallback] + [m for m in extras if m not in (primary, fallback)]
+            seen = set()
+            self.models = [m for m in models if not (m in seen or seen.add(m))]
 
-        models = [primary, fallback] + [m for m in extras if m not in (primary, fallback)]
-        seen = set()
-        self.models = [m for m in models if not (m in seen or seen.add(m))]
-        logger.info(f'GroqProvider initialized with models cascade: {self.models}')
+        logger.info(f'GroqProvider active models cascade: {self.models}')
 
     def get_models(self) -> List[str]:
         return list(self.models)

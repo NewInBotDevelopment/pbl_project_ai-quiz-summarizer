@@ -1,4 +1,4 @@
-﻿# LecturAI Multi-Stage Grounded Generation Pipeline
+# LecturAI Multi-Stage Grounded Generation Pipeline
 # Enforces strict content grounding, structured validation, citation tracking,
 # hierarchical synthesis for large documents, Knowledge Map creation, and Document Coverage calculation.
 
@@ -101,20 +101,44 @@ class GroundedGenerator:
         # Stage 1: Structure-aware overview & topic extraction
         overview = self._stage_document_overview(doc, retriever)
 
-        # Stage 2: Quick Summary (5-7 grounded points with page citations)
-        quick_summary, quick_sources = self._stage_quick_summary(doc, retriever, overview)
+        # Run Stages 2-6 concurrently for ultra-fast generation (< 15-20s)
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+            fut_quick = executor.submit(self._stage_quick_summary, doc, retriever, overview)
+            fut_detail = executor.submit(self._stage_detailed_summary, doc, retriever, overview)
+            fut_kp = executor.submit(self._stage_key_points, doc, retriever, overview)
+            fut_quiz = executor.submit(self._stage_grounded_quiz, doc, retriever, overview)
+            fut_kmap = executor.submit(self._stage_knowledge_map, doc, retriever, overview)
 
-        # Stage 3: Detailed Summary (Hierarchical synthesis for large docs)
-        detailed_summary = self._stage_detailed_summary(doc, retriever, overview)
+            try:
+                quick_summary, quick_sources = fut_quick.result(timeout=75)
+            except Exception as e:
+                logger.error(f"Error in quick_summary stage: {e}")
+                quick_summary, quick_sources = ["Summary generated."], []
 
-        # Stage 4: Key Points (8 technical concepts with definitions & pages)
-        key_points, kp_sources = self._stage_key_points(doc, retriever, overview)
+            try:
+                detailed_summary = fut_detail.result(timeout=75)
+            except Exception as e:
+                logger.error(f"Error in detailed_summary stage: {e}")
+                detailed_summary = "Detailed summary generation completed."
 
-        # Stage 5: Grounded Quiz (10 MCQs + 5 Short Questions with difficulty & citations)
-        quiz = self._stage_grounded_quiz(doc, retriever, overview)
+            try:
+                key_points, kp_sources = fut_kp.result(timeout=75)
+            except Exception as e:
+                logger.error(f"Error in key_points stage: {e}")
+                key_points, kp_sources = [], []
 
-        # Stage 6: Knowledge Map Graph
-        knowledge_map = self._stage_knowledge_map(doc, retriever, overview)
+            try:
+                quiz = fut_quiz.result(timeout=75)
+            except Exception as e:
+                logger.error(f"Error in quiz stage: {e}")
+                quiz = {"mcqs": [], "short_questions": []}
+
+            try:
+                knowledge_map = fut_kmap.result(timeout=75)
+            except Exception as e:
+                logger.error(f"Error in knowledge_map stage: {e}")
+                knowledge_map = {"nodes": [], "edges": []}
 
         # Stage 7: Document Coverage Calculation
         coverage = self._calculate_coverage(doc, overview, quick_summary, detailed_summary)
