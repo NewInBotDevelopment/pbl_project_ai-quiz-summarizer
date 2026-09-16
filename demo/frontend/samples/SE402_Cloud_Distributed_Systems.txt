@@ -1,0 +1,31 @@
+# Lecture 12: Distributed Cloud Systems, Consensus & Fault Tolerance
+Instructor: Department of Software Engineering & Cloud Computing
+Course: SE402 - Distributed Computing Systems
+
+=== SECTION 1: ARCHITECTURAL FOUNDATIONS ===
+Distributed systems connect autonomous compute nodes across network boundaries to provide horizontal scalability, zero single point of failure (SPOF), and geographic fault tolerance.
+
+=== SECTION 2: BREWER'S CAP THEOREM ===
+Eric Brewer proved that a distributed data store can simultaneously guarantee at most two of the following three properties:
+1. Consistency (C): Linearizable state where every read receives the most recent write or an explicit error.
+2. Availability (A): Every non-failing node returns a valid response without error.
+3. Partition Tolerance (P): The system continues operating despite lost or delayed packets across network links.
+Since real physical networks inevitably experience partitions (fiber cuts, hardware crashes), Partition Tolerance is non-negotiable. Systems must choose between CP (e.g. etcd, Zookeeper) or AP (e.g. Cassandra, DynamoDB).
+
+=== SECTION 3: THE PACELC THEOREM ===
+Abadi formulated the PACELC theorem to characterize tradeoffs during normal steady-state execution:
+- If Partition (P): Choose between Availability (A) and Consistency (C).
+- Else (E): Choose between Latency (L) and Consistency (C).
+Systems like DynamoDB prioritize low latency (PA/EL), while ACID relational stores prioritize consistency (PC/EC).
+
+=== SECTION 4: THE RAFT CONSENSUS ALGORITHM ===
+Raft manages replicated state machines across clusters using:
+1. Leader Election: Uses randomized heartbeat timeouts (150-300ms). When a leader fails, candidates request votes. A candidate receiving majority quorum votes becomes leader.
+2. Log Replication: The leader receives client commands, appends them to its local log, sends AppendEntries RPCs to followers, and commits once replicated across a majority (N/2 + 1) of nodes.
+3. Safety: If a leader commits a log entry at index i, no other node will ever apply a different entry at index i.
+
+=== SECTION 5: DISTRIBUTED TRANSACTIONS: TWO-PHASE COMMIT (2PC) ===
+2PC coordinates atomic commit across multiple distributed databases:
+- Phase 1 (Prepare): Coordinator requests PREPARE votes from all cohort shards. Cohorts write undo/redo logs and vote YES or NO.
+- Phase 2 (Commit): If all cohorts vote YES, coordinator broadcasts COMMIT. If any vote NO, coordinator broadcasts ABORT.
+Drawback: 2PC is a blocking protocol. If the coordinator crashes after Phase 1, cohorts remain locked indefinitely. Microservices architectures prefer the asynchronous Saga Pattern with compensating rollback transactions.

@@ -1,0 +1,38 @@
+# Lecture: Operating Systems — Concurrency, Synchronization & Deadlocks
+Instructor: Department of Computer Science & Engineering
+Course: CS301 - Operating Systems Principles
+
+=== SECTION 1: CONCURRENCY & RACE CONDITIONS ===
+Multiprogramming and multicore architectures allow multiple execution threads to interleave. When threads concurrently access shared mutable memory without coordination, Race Conditions occur: the final output depends unpredictably on the exact execution order.
+
+=== SECTION 2: THE CRITICAL SECTION PROBLEM ===
+A Critical Section is a segment of code where shared resources (shared variables, files, tables) are manipulated.
+Any valid synchronization protocol must satisfy three fundamental criteria:
+1. Mutual Exclusion: If Process P_i is executing in its critical section, no other process may be executing in its critical section.
+2. Progress: If no process is in its critical section and some wish to enter, only processes not in remainder section can participate in the selection.
+3. Bounded Waiting: A bound must exist on the number of times other processes enter their critical sections after a process has requested entry.
+
+=== SECTION 3: SYNCHRONIZATION PRIMITIVES ===
+- Mutex Locks: Binary boolean flags providing exclusive acquire() and release() semantics.
+- Semaphores: Integer variables accessed solely via atomic operations:
+  * wait(S) / P(S): while (S <= 0); S--;
+  * signal(S) / V(S): S++;
+Counting Semaphores manage finite multi-instance resource pools, while Binary Semaphores act as Mutex locks.
+
+=== SECTION 4: DEADLOCKS & THE 4 COFFMAN CONDITIONS ===
+A Deadlock occurs when a set of blocked processes each hold a resource and wait to acquire another resource held by a process in the set.
+A system can deadlock IF AND ONLY IF all four Coffman conditions hold simultaneously:
+1. Mutual Exclusion: At least one non-shareable resource.
+2. Hold and Wait: A process holds at least one resource and requests additional held resources.
+3. No Preemption: Resources can only be released voluntarily by holding processes.
+4. Circular Wait: A closed cycle of processes exists where P_0 waits for P_1, P_1 for P_2, ... and P_n for P_0.
+
+=== SECTION 5: DEADLOCK AVOIDANCE & BANKER'S ALGORITHM ===
+Dijkstra's Banker's Algorithm dynamically evaluates state safety before granting resource requests.
+Data Structures:
+- Available[m]: Available instances of resource type R_j.
+- Max[n][m]: Maximum demand of Process P_i for resource R_j.
+- Allocation[n][m]: Currently allocated instances.
+- Need[n][m] = Max[n][m] - Allocation[n][m].
+A state is defined as 'Safe' if there exists a sequence <P_1, P_2, ..., P_n> such that for each P_i, Need_i <= Available + sum_{k<i} Allocation_k.
+If granting a request results in an Unsafe state, the requesting process is forced to wait.

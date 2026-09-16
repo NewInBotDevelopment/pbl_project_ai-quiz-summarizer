@@ -1,0 +1,34 @@
+# Lecture 08: Deep Learning and Convolutional Neural Networks (CNNs)
+Instructor: Department of Computer Science & Engineering
+Course: CS408 - Deep Learning & Neural Computation
+
+=== SECTION 1: INTRODUCTION & RECEPTIVE FIELDS ===
+Traditional Multi-Layer Perceptrons (MLPs) suffer from parameter explosion when applied to grid-structured high-resolution images. A 1000x1000 RGB image produces 3 million input features, requiring billions of parameters in a single fully connected layer.
+Convolutional Neural Networks (CNNs) solve this via two core principles:
+1. Sparse Connectivity: Neurons connect only to local spatial receptive fields.
+2. Parameter Sharing (Weight Tying): A single kernel filter is applied across the entire spatial domain, enforcing translation equivariance.
+
+=== SECTION 2: CONVOLUTION & ACTIVATION FUNCTIONS ===
+A convolutional kernel performs discrete 2D cross-correlations across the input tensor:
+S(i, j) = (I * K)(i, j) = sum_m sum_n I(i+m, j+n) * K(m, n)
+
+Following convolution, element-wise non-linear activations are applied.
+The Rectified Linear Unit (ReLU), defined as f(x) = max(0, x), is the standard activation function in modern deep vision models.
+Unlike Sigmoid or Tanh, ReLU does not saturate for positive inputs, maintaining a constant derivative of 1 and effectively preventing the Vanishing Gradient Problem during backpropagation.
+
+=== SECTION 3: SPATIAL POOLING & DOWNSAMPLING ===
+Pooling layers reduce spatial dimensions (width and height) while retaining feature depth:
+- Max Pooling: Extracts the maximum activation in each local window (e.g. 2x2 with stride 2), discarding 75% of activations while preserving dominant edge/shape signals.
+- Average Pooling: Computes the arithmetic mean over the window, commonly used at the network head before final classification.
+Output Dimensions Formula: Output = floor((W - F + 2P) / S) + 1, where W is input width, F is filter size, P is padding, and S is stride.
+
+=== SECTION 4: BATCH NORMALIZATION & RESIDUAL NETWORKS ===
+- Batch Normalization: Standardizes layer activations across mini-batches (zero mean, unit variance), accelerating optimization convergence and enabling higher learning rates.
+- Residual Connections (ResNet): Introduces identity shortcut connections: y = F(x, {W_i}) + x. This allows gradients to propagate directly to early layers without degradation, enabling architectures with 100+ layers.
+
+=== SECTION 5: CLASSIFICATION HEAD & SOFTMAX ===
+High-level feature maps are flattened into a 1D representation and passed to dense layers.
+The final layer uses Softmax activation:
+P(y = c | x) = exp(z_c) / sum_{j=1}^C exp(z_j)
+This produces a strictly positive probability distribution across classes that sums to 1.0.
+Cross-Entropy Loss is minimized via stochastic gradient descent (SGD) or Adam optimization.

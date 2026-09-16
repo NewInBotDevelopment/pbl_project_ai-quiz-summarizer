@@ -640,9 +640,12 @@ function _nextToast() {
 
 // ─── FALLBACK DATA ────────────────────────────────────────────
 function _fallback() {
+  if (window.PRESET_DEMOS && window.PRESET_DEMOS.deep_learning) {
+    return window.PRESET_DEMOS.deep_learning;
+  }
   return {
-    filename: 'demo_lecture.mp4',
-    processTime: '5.4s',
+    filename: 'Lecture_08_Deep_Learning_and_CNNs.pdf',
+    processTime: '2.1s',
     wordCount: 1620,
     transcript: `[00:00] Welcome to the LecturAI demo. This page shows what AI-generated results look like.
 
