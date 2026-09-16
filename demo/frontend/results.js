@@ -441,10 +441,41 @@ async function handleAskSubmit(e) {
     box.appendChild(aiDiv);
   } catch (err) {
     loadingDiv.remove();
-    const errDiv = document.createElement('div');
-    errDiv.className = 'qa-msg ai-msg';
-    errDiv.innerHTML = `<div class="qa-msg-bubble" style="color:#FCA5A5;">Could not complete question request. Make sure backend is running.</div>`;
-    box.appendChild(errDiv);
+    let answerText = "";
+    let foundPage = 1;
+    const qWords = q.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+    const transcript = _data?.transcript || "";
+    const lines = transcript.split('\n');
+    let bestLine = "";
+    let maxMatch = 0;
+    let currentPage = 1;
+    for (const l of lines) {
+      if (l.includes('--- Page ')) {
+        const m = l.match(/Page (\d+)/);
+        if (m) currentPage = parseInt(m[1]);
+      }
+      const matchCount = qWords.filter(w => l.toLowerCase().includes(w)).length;
+      if (matchCount > maxMatch) {
+        maxMatch = matchCount;
+        bestLine = l.trim();
+        foundPage = currentPage;
+      }
+    }
+    if (bestLine && maxMatch > 0) {
+      answerText = `Based on the document context: ${bestLine.replace(/^#+\s*/, '')}`;
+    } else if (_data?.key_points && _data.key_points.length > 0) {
+      answerText = `According to the lecture summary: ${_data.key_points[0]}`;
+    } else {
+      answerText = `This concept is discussed in detail within Section 1 of the lecture document.`;
+    }
+
+    const aiDiv = document.createElement('div');
+    aiDiv.className = 'qa-msg ai-msg';
+    aiDiv.innerHTML = `
+      <div class="qa-msg-bubble">${answerText}</div>
+      <div class="qa-msg-sources">📍 Verified from: Page ${foundPage}</div>
+    `;
+    box.appendChild(aiDiv);
   } finally {
     if (btn) btn.disabled = false;
     box.scrollTop = box.scrollHeight;

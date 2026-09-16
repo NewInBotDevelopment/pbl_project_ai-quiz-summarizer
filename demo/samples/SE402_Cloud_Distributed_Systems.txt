@@ -1,0 +1,47 @@
+# Lecture 12: Distributed Systems Architecture, Consensus & CAP
+Dept. of Software Engineering & Cloud Computing
+
+Distributed systems consist of autonomous nodes communicating across physical network topologies to solve computational and storage problems collaboratively. They provide horizontal scalability, high fault tolerance, and geo-redundancy.
+
+## 1. Brewer's CAP Theorem
+Eric Brewer proved that any distributed data store can simultaneously guarantee at most two of the following three properties:
+- Consistency (C): Every read receives the most recent write or an error (Linearizability).
+- Availability (A): Every non-failing node returns a non-error response for every request.
+- Partition Tolerance (P): The system continues operating despite dropped or delayed messages between nodes.
+
+## 2. CP vs AP Trade-offs in Practice
+Because physical networks inevitably partition (fiber cuts, router reboots), P is non-negotiable. Therefore, architects must choose:
+- CP Systems (e.g., Zookeeper, etcd, MongoDB strict): Reject writes during partitions to avoid split-brain inconsistencies.
+- AP Systems (e.g., Apache Cassandra, DynamoDB): Accept writes on both sides of partition, resolving conflicts downstream.
+
+## 3. The PACELC Theorem
+Abadi formulated PACELC to describe trade-offs during normal execution when NO partition exists:
+If Partition (P), choose Availability (A) or Consistency (C);
+Else (E), choose Latency (L) or Consistency (C).
+For example, MongoDB is PC/EC (prefers consistency in both states), while Cassandra is PA/EL (prefers availability and low latency).
+
+## 4. Quorum Consensus Models
+In distributed storage with N nodes, read and write quorums (R and W) enforce consistency:
+- If R + W > N, the read quorum and write quorum overlap by at least one node, ensuring strong read-your-writes consistency.
+- If R + W <= N, stale reads are possible, yielding eventual consistency.
+
+## 5. The Raft Consensus Algorithm
+Ongaro & Ousterhout designed Raft as an understandable alternative to Paxos. Raft decomposes consensus into:
+1. Leader Election: Nodes use randomized election timers (150-300ms) to vote for candidate leaders.
+2. Log Replication: The leader appends client entries, sends AppendEntries RPCs to followers, and commits once a majority quorum acknowledges.
+3. State Machine Safety: If a leader commits an entry, no other node can apply a different entry for that log index.
+
+## 6. Byzantine Fault Tolerance (BFT)
+Crash-fault tolerant protocols (Raft, Paxos) assume nodes are benign and only crash. Byzantine protocols (PBFT) handle malicious or corrupted nodes, requiring 3F + 1 total nodes to tolerate F Byzantine failures.
+
+## 7. Distributed Transactions: Two-Phase Commit (2PC)
+2PC coordinates atomic updates across distributed databases:
+- Phase 1 (Prepare): Coordinator sends PREPARE to cohorts. Cohorts write undo/redo logs and vote YES or NO.
+- Phase 2 (Commit): If all vote YES, coordinator broadcasts COMMIT. If any vote NO, coordinator broadcasts ABORT.
+2PC is a blocking protocol: if the coordinator crashes during Phase 2, cohorts must wait indefinitely holding locks.
+
+## 8. Vector Clocks and Conflict Resolution
+In decentralized systems without global clocks, Vector Clocks associate each event with a vector of logical timestamps V = [v1, v2, ... vn], establishing causal dependencies and detecting concurrent write conflicts (e.g., in DynamoDB).
+
+## 9. Eventual Consistency & The Saga Pattern
+For microservices architectures, the Saga Pattern breaks a distributed business transaction into a sequence of local transactions. Each step publishes an event; if a step fails, compensating transactions are executed in reverse order to undo earlier changes without distributed locking.

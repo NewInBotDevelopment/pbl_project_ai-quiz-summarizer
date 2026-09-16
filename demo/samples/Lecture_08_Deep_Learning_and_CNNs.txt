@@ -1,0 +1,27 @@
+# Lecture 08: Convolutional Neural Networks (CNNs) & Deep Vision
+Department of Computer Science & Engineering — Neural Computation
+
+In this lecture, we explore the mathematical foundations and architectural design of Convolutional Neural Networks (CNNs). Standard Multilayer Perceptrons (MLPs) struggle with high-resolution image inputs due to the sheer explosion of parameters. A 1000x1000 pixel RGB image has 3 million inputs, resulting in billions of weights in a single hidden layer. CNNs overcome this limitation by introducing parameter sharing and sparse connectivity, allowing spatial hierarchy extraction.
+
+## 1. Convolution Operations & Kernel Filtering
+The core building block of a CNN is the convolutional layer. A kernel (filter matrix, typically 3x3 or 5x5) slides across the receptive field of the input tensor, computing discrete 2D convolutions (Frobenius inner products). The kernel weights are shared across the entire image space, enforcing translational equivariance.
+
+## 2. Activation Functions & Rectified Linear Units (ReLU)
+Following each linear convolution, element-wise non-linear activations are applied. While Sigmoid and Tanh were historically utilized, they suffer from gradient saturation in deep networks where derivatives approach zero. The Rectified Linear Unit, f(x) = max(0, x), provides constant unit gradient for positive values, accelerating gradient descent and preventing vanishing gradients.
+
+## 3. Spatial Pooling & Downsampling
+Pooling layers reduce the spatial dimensions (height and width) of intermediate feature representations while preserving channel depth. Max Pooling takes the maximum activation within a sliding window (e.g., 2x2 with stride 2), discarding 75% of activations while retaining dominant features and imparting translation invariance.
+
+## 4. Hyperparameters: Stride and Padding
+Output spatial dimensionality is governed by input size (W), filter size (F), zero-padding (P), and stride (S):
+Output Size = ((W - F + 2P) / S) + 1. 'Same' padding adds border zeros to preserve spatial resolution, while 'Valid' padding permits spatial shrinkage.
+
+## 5. Batch Normalization & Internal Covariate Shift
+Batch Normalization (Ioffe & Szegedy) normalizes layer inputs across each mini-batch to have zero mean and unit variance, followed by learnable scale (gamma) and shift (beta) parameters. This stabilizes optimization dynamics and reduces sensitivity to weight initialization.
+
+## 6. Residual Connections & Optimization
+Deep networks with over 50 layers experience optimization degradation. Deep Residual Networks (ResNet) introduce shortcut connections that skip one or more layers, allowing gradients to propagate uninhibited through identity mappings back to the earliest layers.
+
+## 7. Dense Heads & Softmax Categorization
+The final feature maps are flattened into a 1D vector and fed into one or more Fully Connected (Dense) layers. The final layer applies the Softmax activation function:
+P(y = c | x) = exp(z_c) / sum(exp(z_j)), mapping unbounded logits into normalized class probabilities summing to 1.0.

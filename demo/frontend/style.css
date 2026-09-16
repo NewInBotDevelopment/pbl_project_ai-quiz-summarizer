@@ -662,8 +662,93 @@ body.light .fmt-chip { background: rgba(0,0,0,0.04); }
 body.light .loading-overlay { background: rgba(248,250,252,0.92); }
 body.light .glass, body.light .glass-sm { background: rgba(255,255,255,0.75); }
 
-/* ─── RESPONSIVE ─── */
+/* ─── SAMPLE PRESET DEMOS ─── */
+.sample-demos-card {
+  margin-top: 28px;
+  padding-top: 22px;
+  border-top: 1px solid var(--border);
+}
+.sample-demos-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.sample-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border-radius: var(--r-pill);
+  background: rgba(59,130,246,0.15);
+  color: var(--blue-l);
+  border: 1px solid var(--border-blue);
+}
+.sample-demos-header h3 {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.sample-demos-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.sample-demo-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  color: var(--text-1);
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--t-normal);
+}
+.sample-demo-btn:hover {
+  background: var(--bg-surface-hover);
+  border-color: var(--border-blue);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(59,130,246,0.15);
+}
+.sample-demo-btn .demo-icon {
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+.sample-demo-btn .demo-info {
+  flex: 1;
+  min-width: 0;
+}
+.sample-demo-btn .demo-title {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sample-demo-btn .demo-sub {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--text-3);
+  margin-top: 2px;
+}
+.sample-demo-btn .demo-arrow {
+  font-size: 0.9rem;
+  color: var(--blue-l);
+  transition: transform var(--t-fast);
+}
+.sample-demo-btn:hover .demo-arrow {
+  transform: translateX(3px);
+}
 @media (max-width: 768px) {
+  .sample-demos-grid {
+    grid-template-columns: 1fr;
+  }
   .navbar { padding: 0 1rem; }
   .hero { padding: 60px 1.5rem 40px; }
   .upload-section { padding: 0 1rem 60px; }

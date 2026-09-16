@@ -191,6 +191,40 @@
       </button>
     </div>
 
+    <!-- Quick Demo Presets -->
+    <div class="sample-demos-card">
+      <div class="sample-demos-header">
+        <span class="sample-badge">✨ Instant Demo</span>
+        <h3>Or test instantly with pre-loaded lecture demos:</h3>
+      </div>
+      <div class="sample-demos-grid">
+        <button type="button" class="sample-demo-btn" onclick="loadPresetDemo('deep_learning')">
+          <div class="demo-icon">🧠</div>
+          <div class="demo-info">
+            <span class="demo-title">Deep Learning &amp; CNNs</span>
+            <span class="demo-sub">Computer Science · 8 pages</span>
+          </div>
+          <span class="demo-arrow">→</span>
+        </button>
+        <button type="button" class="sample-demo-btn" onclick="loadPresetDemo('operating_systems')">
+          <div class="demo-icon">⚡</div>
+          <div class="demo-info">
+            <span class="demo-title">OS Deadlocks &amp; Sync</span>
+            <span class="demo-sub">Core Systems · 6 pages</span>
+          </div>
+          <span class="demo-arrow">→</span>
+        </button>
+        <button type="button" class="sample-demo-btn" onclick="loadPresetDemo('distributed_systems')">
+          <div class="demo-icon">☁️</div>
+          <div class="demo-info">
+            <span class="demo-title">Distributed Cloud Systems</span>
+            <span class="demo-sub">Cloud Architecture · 10 pages</span>
+          </div>
+          <span class="demo-arrow">→</span>
+        </button>
+      </div>
+    </div>
+
   </div>
 </section>
 
@@ -213,6 +247,7 @@
 
   </main>
 
+  <script src="demo_data.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

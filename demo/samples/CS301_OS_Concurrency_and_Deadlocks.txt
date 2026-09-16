@@ -1,0 +1,31 @@
+# Lecture: Operating System Synchronization & Deadlocks
+Dept. of Computer Science & Engineering — Systems Core
+
+Concurrent systems allow multiple processes or threads to execute in interleaved fashion. When threads share memory without coordination, Race Conditions occur, leading to non-deterministic bugs and memory corruption.
+
+## 1. The Critical Section Problem
+A Critical Section is a segment of code in which a process accesses shared resources (tables, files, memory). Any valid synchronization solution must satisfy three criteria:
+1. Mutual Exclusion: If process P_i is executing in its critical section, no other processes can be.
+2. Progress: If no process is in its critical section, only processes not in their remainder sections can participate in deciding who enters next.
+3. Bounded Waiting: There must be a bound on the number of times other processes can enter before a requesting process is granted entry.
+
+## 2. Synchronization Primitives: Semaphores & Mutexes
+A Semaphore S is an integer variable accessed only through atomic operations:
+- wait(S): while (S <= 0); S--;
+- signal(S): S++;
+Binary semaphores act as Mutex locks, whereas Counting Semaphores coordinate access to finite resource pools.
+
+## 3. Deadlock Characterization: Coffman Conditions
+A Deadlock occurs when a set of blocked processes each hold a resource and wait to acquire a resource held by another process in the set.
+Deadlock can arise if and only if four Coffman conditions hold simultaneously:
+1. Mutual Exclusion: At least one non-shareable resource.
+2. Hold and Wait: A process holds at least one resource and requests additional resources held by others.
+3. No Preemption: Resources cannot be forcibly preempted.
+4. Circular Wait: A closed chain of processes exists where each process holds resources needed by the next.
+
+## 4. Deadlock Avoidance & Banker's Algorithm
+Deadlock avoidance dynamically assesses resource requests using state algorithms.
+Dijkstra's Banker's Algorithm tracks Available[m], Max[n][m], Allocation[n][m], and Need[n][m] where Need = Max - Allocation. A request is granted only if the resulting state is 'Safe', meaning a sequence <P1, P2, ... Pn> exists where each process can obtain its maximum claim and terminate.
+
+## 5. Resource Allocation Graphs & Detection
+A Resource Allocation Graph (RAG) consists of Process nodes (circles) and Resource nodes (boxes). Request edges point from Process to Resource, and Assignment edges point from Resource to Process. In single-instance resource systems, the presence of a cycle in the RAG is a necessary and sufficient condition for deadlock.
