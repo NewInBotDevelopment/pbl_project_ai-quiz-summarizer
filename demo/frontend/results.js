@@ -12,6 +12,22 @@ const BACKEND_URL = (window.location.hostname === 'localhost' || window.location
   ? (localStorage.getItem('lecturAI_backend_url') || "http://127.0.0.1:5000")
   : (localStorage.getItem('lecturAI_backend_url') || DEFAULT_RENDER_BACKEND);
 
+// ─── THEME ──────────────────────────────────────────────────
+function toggleTheme() {
+  document.body.classList.toggle('light');
+  const btn = document.getElementById('themeToggle');
+  if (btn) btn.classList.toggle('light');
+  localStorage.setItem('lecturAI_theme', document.body.classList.contains('light') ? 'light' : 'dark');
+}
+
+(function restoreTheme() {
+  if (localStorage.getItem('lecturAI_theme') === 'light') {
+    document.body.classList.add('light');
+    const btn = document.getElementById('themeToggle');
+    if (btn) btn.classList.add('light');
+  }
+})();
+
 // ─── STATE ──────────────────────────────────────────────────
 let _data = null;
 let _answersVisible = false;
